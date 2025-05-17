@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction Project Manager</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --border-color: #e9ecef;
+            --primary-color: #3a86ff;
+            --primary-hover: #2a75e8;
+            --completed-color: #38b000;
+            --delete-color: #e63946;
+            --delete-hover: #d62828;
+            --muted-color: #6c757d;
+            --slider-bg: #dee2e6;
+            --slider-fill: #3a86ff;
+            --header-bg: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --input-bg: #ffffff;
+            --input-border: #ced4da;
+            --overlay-bg: rgba(0, 0, 0, 0.8);
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #e9ecef;
+            --card-bg: #1e1e1e;
+            --border-color: #2d3748;
+            --primary-color: #4895ef;
+            --primary-hover: #3a86ff;
+            --completed-color: #52b788;
+            --delete-color: #e5383b;
+            --delete-hover: #ba181b;
+            --muted-color: #adb5bd;
+            --slider-bg: #2d3748;
+            --slider-fill: #4895ef;
+            --header-bg: #1a1a1a;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            --input-bg: #2d3748;
+            --input-border: #4a5568;
+            --overlay-bg: rgba(0, 0, 0, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            box-shadow: var(--shadow);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .item-list, .role-list {
+            list-style: none;
+        }
+
+        .item, .role {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+
+        .item:hover, .role:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .dark-mode .item:hover, .dark-mode .role:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .item:last-child, .role:last-child {
+            border-bottom: none;
+        }
+
+        .item-name, .role-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .item-counter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-delete {
+            background-color: var(--delete-color);
+        }
+
+        .btn-delete:hover {
+            background-color: var(--delete-hover);
+        }
+
+        .completed {
+            color: var(--completed-color);
+            font-weight: 600;
+        }
+
+        .completed::after {
+            content: " ✓";
+        }
+
+        .progress-container {
+            margin: 1rem 0;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .progress-slider {
+            width: 100%;
+            height: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--slider-bg);
+            border-radius: 5px;
+            outline: none;
+            margin: 1rem 0;
+        }
+
+        .progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--slider-fill);
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(58, 134, 255, 0.2);
+        }
+
+        .progress-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--slider-fill);
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(58, 134, 255, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.1);
+        }
+
+        /* Fix for item quantity input */
+        .item-input {
+            background-color: var(--input-bg) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--input-border) !important;
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            text-align: center;
+            width: 60px;
+            transition: border-color 0.2s;
+        }
+
+        .item-input:focus {
+            outline: none;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.1);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--slider-bg);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .role-details {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .role-yakuwari {
+            font-weight: 600;
+        }
+
+        .role-disp {
+            font-size: 0.875rem;
+            color: var(--muted-color);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .item-progress {
+            width: 100%;
+            height: 6px;
+            background-color: var(--slider-bg);
+            border-radius: 3px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .item-progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .item-details {
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        .item-status {
+            font-size: 0.875rem;
+            color: var(--muted-color);
+            margin-top: 0.25rem;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted-color);
+        }
+
+        .empty-state p {
+            margin-bottom: 1rem;
+        }
+
+        /* Login overlay styles */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-header h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .error-message {
+            color: var(--delete-color);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-logout {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-mode .btn-logout:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .item, .role {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .item-counter {
+                margin-top: 0.75rem;
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .role-details {
+                margin: 0.5rem 0;
+            }
+
+            .header-actions {
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-header">
+                <h2>Password Required</h2>
+                <p>Please enter the password to access this site</p>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+            <button class="btn" id="loginBtn" style="width: 100%;">Login</button>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+    </div>
+
+    <header>
+        <h1>Construction Project Manager</h1>
+        <div class="header-actions">
+            <button id="logoutBtn" class="btn btn-logout">Logout</button>
+            <div class="theme-toggle">
+                <span id="modeText">Dark Mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkModeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="progress-header">
+                <h2>Progress</h2>
+                <div class="progress-value" id="progressValue">0%</div>
+            </div>
+            <input type="range" min="0" max="100" value="0" class="progress-slider" id="progressSlider">
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="items">Items</div>
+            <div class="tab" data-tab="roles">Roles</div>
+        </div>
+
+        <div class="tab-content active" id="itemsTab">
+            <div class="card">
+                <div class="section-header">
+                    <h2>Item Management</h2>
+                </div>
+                
+                <ul class="item-list" id="itemList">
+                    <!-- Items will be added here dynamically -->
+                </ul>
+                
+                <div id="emptyItems" class="empty-state">
+                    <p>No items added yet.</p>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newItemName">Item Name</label>
+                        <input type="text" id="newItemName" placeholder="Enter item name">
+                    </div>
+                    <div class="form-group">
+                        <label for="newItemTarget">Target Quantity</label>
+                        <input type="number" id="newItemTarget" placeholder="Enter target" min="1" value="1">
+                    </div>
+                </div>
+                <button class="btn" id="addItemBtn">Add Item</button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="rolesTab">
+            <div class="card">
+                <div class="section-header">
+                    <h2>Role List</h2>
+                </div>
+                
+                <ul class="role-list" id="roleList">
+                    <!-- Roles will be added here dynamically -->
+                </ul>
+                
+                <div id="emptyRoles" class="empty-state">
+                    <p>No roles added yet.</p>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newRoleName">Name</label>
+                        <input type="text" id="newRoleName" placeholder="Enter name">
+                    </div>
+                    <div class="form-group">
+                        <label for="newRoleYakuwari">Role</label>
+                        <input type="text" id="newRoleYakuwari" placeholder="Enter role">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newRoleDisp">Notes</label>
+                    <input type="text" id="newRoleDisp" placeholder="Enter notes (optional)">
+                </div>
+                <button class="btn" id="addRoleBtn">Add Role</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginOverlay = document.getElementById('loginOverlay');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const modeText = document.getElementById('modeText');
+        const progressSlider = document.getElementById('progressSlider');
+        const progressValue = document.getElementById('progressValue');
+        const itemList = document.getElementById('itemList');
+        const roleList = document.getElementById('roleList');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const addRoleBtn = document.getElementById('addRoleBtn');
+        const emptyItems = document.getElementById('emptyItems');
+        const emptyRoles = document.getElementById('emptyRoles');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Constants
+        const CORRECT_PASSWORD = "creeper_dev_1111";
+        const AUTH_KEY = "constructionManagerAuth";
+
+        // State
+        let items = [];
+        let roles = [];
+        let progress = 0;
+        let darkMode = false;
+        let isAuthenticated = false;
+
+        // Check if user is authenticated
+        function checkAuthentication() {
+            const auth = localStorage.getItem(AUTH_KEY);
+            isAuthenticated = auth === "true";
+            
+            if (isAuthenticated) {
+                loginOverlay.style.display = "none";
+            } else {
+                loginOverlay.style.display = "flex";
+            }
+        }
+
+        // Handle login
+        function handleLogin() {
+            const password = passwordInput.value;
+            
+            if (password === CORRECT_PASSWORD) {
+                localStorage.setItem(AUTH_KEY, "true");
+                isAuthenticated = true;
+                loginOverlay.style.display = "none";
+                errorMessage.textContent = "";
+                passwordInput.value = "";
+            } else {
+                errorMessage.textContent = "Incorrect password. Please try again.";
+                passwordInput.value = "";
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            localStorage.removeItem(AUTH_KEY);
+            isAuthenticated = false;
+            loginOverlay.style.display = "flex";
+        }
+
+        // Initialize
+        function init() {
+            checkAuthentication();
+            loadData();
+            renderItems();
+            renderRoles();
+            updateProgress(progress);
+            setupEventListeners();
+        }
+
+        // Load data from localStorage
+        function loadData() {
+            const savedItems = localStorage.getItem('constructionItems');
+            const savedRoles = localStorage.getItem('constructionRoles');
+            const savedProgress = localStorage.getItem('constructionProgress');
+            const savedDarkMode = localStorage.getItem('darkMode');
+
+            if (savedItems) {
+                items = JSON.parse(savedItems);
+            } else {
+                // Default items
+                items = [
+                    { name: '羊毛', target: 10, current: 0 },
+                    { name: 'コンクリート', target: 20, current: 0 },
+                    { name: '染料', target: 5, current: 0 }
+                ];
+            }
+
+            if (savedRoles) {
+                roles = JSON.parse(savedRoles);
+            } else {
+                // Default roles
+                roles = [
+                    { name: 'しゅうき', yakuwari: 'アイス建築', disp: 'メモ' },
+                    { name: 'みこと', yakuwari: 'アイス建築', disp: 'メモ' },
+                    { name: 'しおん', yakuwari: 'からあげ建築', disp: 'メモ' },
+                    { name: 'りょうた', yakuwari: 'からあげ建築', disp: 'メモ' },
+                    { name: 'やまと', yakuwari: 'アイス材料集め', disp: 'メモ' },
+                    { name: 'ひなた', yakuwari: 'アイス材料集め', disp: 'メモ' },
+                    { name: 'ゆづき', yakuwari: 'からあげ材料集め', disp: 'メモ' }
+                ];
+            }
+
+            if (savedProgress) {
+                progress = parseInt(savedProgress);
+                progressSlider.value = progress;
+            }
+
+            if (savedDarkMode === 'true') {
+                darkMode = true;
+                darkModeToggle.checked = true;
+                document.body.classList.add('dark-mode');
+                modeText.textContent = 'Light Mode';
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('constructionItems', JSON.stringify(items));
+            localStorage.setItem('constructionRoles', JSON.stringify(roles));
+            localStorage.setItem('constructionProgress', progress.toString());
+            localStorage.setItem('darkMode', darkMode.toString());
+        }
+
+        // Render items
+        function renderItems() {
+            itemList.innerHTML = '';
+            
+            if (items.length === 0) {
+                emptyItems.style.display = 'block';
+            } else {
+                emptyItems.style.display = 'none';
+                
+                items.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'item';
+                    
+                    const isCompleted = item.current >= item.target;
+                    const progressPercent = Math.min(100, Math.round((item.current / item.target) * 100));
+                    
+                    li.innerHTML = `
+                        <div class="item-details">
+                            <div class="${isCompleted ? 'item-name completed' : 'item-name'}">${item.name}</div>
+                            <div class="item-progress">
+                                <div class="item-progress-bar" style="width: ${progressPercent}%"></div>
+                            </div>
+                            <div class="item-status">${item.current} / ${item.target} (${progressPercent}%)</div>
+                        </div>
+                        <div class="item-counter">
+                            <button class="btn btn-small" data-action="decrease" data-index="${index}">-</button>
+                            <input type="number" value="${item.current}" min="0" data-index="${index}" class="item-input">
+                            <button class="btn btn-small" data-action="increase" data-index="${index}">+</button>
+                            <button class="btn btn-small btn-delete" data-action="delete" data-index="${index}" style="margin-left: 10px;">Delete</button>
+                        </div>
+                    `;
+                    itemList.appendChild(li);
+                });
+            }
+
+            // Add event listeners to buttons and inputs
+            document.querySelectorAll('.item-counter button').forEach(button => {
+                button.addEventListener('click', handleItemAction);
+            });
+
+            document.querySelectorAll('.item-input').forEach(input => {
+                input.addEventListener('change', handleItemInputChange);
+            });
+        }
+
+        // Render roles
+        function renderRoles() {
+            roleList.innerHTML = '';
+            
+            if (roles.length === 0) {
+                emptyRoles.style.display = 'block';
+            } else {
+                emptyRoles.style.display = 'none';
+                
+                // Group roles by yakuwari
+                const groupedRoles = {};
+                roles.forEach(role => {
+                    if (!groupedRoles[role.yakuwari]) {
+                        groupedRoles[role.yakuwari] = [];
+                    }
+                    groupedRoles[role.yakuwari].push(role);
+                });
+                
+                // Create a section for each role type
+                Object.entries(groupedRoles).forEach(([yakuwari, rolesInGroup]) => {
+                    const sectionHeader = document.createElement('div');
+                    sectionHeader.className = 'section-header';
+                    sectionHeader.innerHTML = `<h3>${yakuwari}</h3>`;
+                    roleList.appendChild(sectionHeader);
+                    
+                    rolesInGroup.forEach((role, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'role';
+                        
+                        // Find the actual index in the main roles array
+                        const roleIndex = roles.findIndex(r => 
+                            r.name === role.name && 
+                            r.yakuwari === role.yakuwari && 
+                            r.disp === role.disp
+                        );
+                        
+                        li.innerHTML = `
+                            <div class="role-name">${role.name}</div>
+                            <div class="role-details">
+                                <div class="role-disp">${role.disp}</div>
+                            </div>
+                            <button class="btn btn-small btn-delete" data-action="delete-role" data-index="${roleIndex}">Delete</button>
+                        `;
+                        roleList.appendChild(li);
+                    });
+                });
+            }
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll('[data-action="delete-role"]').forEach(button => {
+                button.addEventListener('click', handleRoleDelete);
+            });
+        }
+
+        // Update progress
+        function updateProgress(value) {
+            progress = value;
+            progressValue.textContent = `${progress}%`;
+            saveData();
+        }
+
+        // Handle item actions (increase, decrease, delete)
+        function handleItemAction(e) {
+            const action = e.target.getAttribute('data-action');
+            const index = parseInt(e.target.getAttribute('data-index'));
+            
+            if (action === 'increase') {
+                items[index].current++;
+            } else if (action === 'decrease') {
+                if (items[index].current > 0) {
+                    items[index].current--;
+                }
+            } else if (action === 'delete') {
+                items.splice(index, 1);
+            }
+            
+            saveData();
+            renderItems();
+        }
+
+        // Handle item input change
+        function handleItemInputChange(e) {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            const value = parseInt(e.target.value);
+            
+            if (!isNaN(value) && value >= 0) {
+                items[index].current = value;
+                saveData();
+                renderItems();
+            }
+        }
+
+        // Handle role delete
+        function handleRoleDelete(e) {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            roles.splice(index, 1);
+            saveData();
+            renderRoles();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Login button
+            loginBtn.addEventListener('click', handleLogin);
+            
+            // Password input enter key
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            // Logout button
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Dark mode toggle
+            darkModeToggle.addEventListener('change', () => {
+                darkMode = darkModeToggle.checked;
+                if (darkMode) {
+                    document.body.classList.add('dark-mode');
+                    modeText.textContent = 'Light Mode';
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    modeText.textContent = 'Dark Mode';
+                }
+                saveData();
+            });
+
+            // Progress slider
+            progressSlider.addEventListener('input', () => {
+                updateProgress(parseInt(progressSlider.value));
+            });
+
+            // Add item button
+            addItemBtn.addEventListener('click', () => {
+                const nameInput = document.getElementById('newItemName');
+                const targetInput = document.getElementById('newItemTarget');
+                
+                const name = nameInput.value.trim();
+                const target = parseInt(targetInput.value);
+                
+                if (name && !isNaN(target) && target > 0) {
+                    items.push({
+                        name,
+                        target,
+                        current: 0
+                    });
+                    
+                    nameInput.value = '';
+                    targetInput.value = '1';
+                    
+                    saveData();
+                    renderItems();
+                }
+            });
+
+            // Add role button
+            addRoleBtn.addEventListener('click', () => {
+                const nameInput = document.getElementById('newRoleName');
+                const yakuwariInput = document.getElementById('newRoleYakuwari');
+                const dispInput = document.getElementById('newRoleDisp');
+                
+                const name = nameInput.value.trim();
+                const yakuwari = yakuwariInput.value.trim();
+                const disp = dispInput.value.trim();
+                
+                if (name && yakuwari) {
+                    roles.push({
+                        name,
+                        yakuwari,
+                        disp: disp || 'Member'
+                    });
+                    
+                    nameInput.value = '';
+                    yakuwariInput.value = '';
+                    dispInput.value = '';
+                    
+                    saveData();
+                    renderRoles();
+                }
+            });
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${tabName}Tab`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
