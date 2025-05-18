@@ -756,4 +756,938 @@
                 </ul>
                 
                 <div id="emptyItems" class="empty-state">
-              
+                    <p>No items added yet.</p>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newItemName">Item Name</label>
+                        <input type="text" id="newItemName" placeholder="Enter item name">
+                    </div>
+                    <div class="form-group">
+                        <label for="newItemTarget">Target Quantity</label>
+                        <input type="number" id="newItemTarget" placeholder="Enter target" min="1" value="1">
+                    </div>
+                </div>
+                <button class="btn" id="addItemBtn">Add Item</button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="rolesTab">
+            <div class="card">
+                <div class="section-header">
+                    <h2>Role List</h2>
+                </div>
+                
+                <ul class="role-list" id="roleList">
+                    <!-- Roles will be added here dynamically -->
+                </ul>
+                
+                <div id="emptyRoles" class="empty-state">
+                    <p>No roles added yet.</p>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newRoleName">Name</label>
+                        <input type="text" id="newRoleName" placeholder="Enter name">
+                    </div>
+                    <div class="form-group">
+                        <label for="newRoleYakuwari">Role</label>
+                        <input type="text" id="newRoleYakuwari" placeholder="Enter role">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newRoleDisp">Notes</label>
+                    <input type="text" id="newRoleDisp" placeholder="Enter notes (optional)">
+                </div>
+                <button class="btn" id="addRoleBtn">Add Role</button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="timeTab">
+            <div class="card">
+                <div class="section-header">
+                    <h2>Timer</h2>
+                </div>
+                
+                <div class="timer-card">
+                    <div class="timer-input">
+                        <input type="number" id="timerHours" min="0" max="99" value="0" placeholder="HH">
+                        <span>:</span>
+                        <input type="number" id="timerMinutes" min="0" max="59" value="0" placeholder="MM">
+                        <span>:</span>
+                        <input type="number" id="timerSeconds" min="0" max="59" value="0" placeholder="SS">
+                    </div>
+                    
+                    <div class="time-display" id="timerDisplay">00:00:00</div>
+                    
+                    <div class="timer-controls">
+                        <button class="btn" id="startTimerBtn">Start</button>
+                        <button class="btn" id="pauseTimerBtn" disabled>Pause</button>
+                        <button class="btn" id="resetTimerBtn">Reset</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="section-header">
+                    <h2>Stopwatch</h2>
+                </div>
+                
+                <div class="timer-card">
+                    <div class="time-display" id="stopwatchDisplay">00:00:00</div>
+                    
+                    <div class="timer-controls">
+                        <button class="btn" id="startStopwatchBtn">Start</button>
+                        <button class="btn" id="pauseStopwatchBtn" disabled>Pause</button>
+                        <button class="btn" id="resetStopwatchBtn">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tasksTab">
+            <div class="card">
+                <div class="section-header">
+                    <h2>Today's Tasks</h2>
+                </div>
+                
+                <div class="task-filters">
+                    <div class="task-filter active" data-filter="all">All</div>
+                    <div class="task-filter" data-filter="active">Active</div>
+                    <div class="task-filter" data-filter="completed">Completed</div>
+                </div>
+                
+                <ul class="task-list" id="todayTaskList">
+                    <!-- Today's tasks will be added here dynamically -->
+                </ul>
+                
+                <div id="emptyTodayTasks" class="empty-state">
+                    <p>No tasks for today.</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newTodayTask">New Task</label>
+                    <input type="text" id="newTodayTask" placeholder="Enter task for today">
+                </div>
+                <button class="btn" id="addTodayTaskBtn">Add Task</button>
+            </div>
+            
+            <div class="card">
+                <div class="section-header">
+                    <h2>All Tasks</h2>
+                </div>
+                
+                <div class="task-filters">
+                    <div class="task-filter active" data-filter="all">All</div>
+                    <div class="task-filter" data-filter="active">Active</div>
+                    <div class="task-filter" data-filter="completed">Completed</div>
+                </div>
+                
+                <ul class="task-list" id="allTaskList">
+                    <!-- All tasks will be added here dynamically -->
+                </ul>
+                
+                <div id="emptyAllTasks" class="empty-state">
+                    <p>No tasks added yet.</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newTask">New Task</label>
+                    <input type="text" id="newTask" placeholder="Enter task">
+                </div>
+                <button class="btn" id="addTaskBtn">Add Task</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginOverlay = document.getElementById('loginOverlay');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const modeText = document.getElementById('modeText');
+        const progressSlider = document.getElementById('progressSlider');
+        const progressValue = document.getElementById('progressValue');
+        const itemList = document.getElementById('itemList');
+        const roleList = document.getElementById('roleList');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const addRoleBtn = document.getElementById('addRoleBtn');
+        const emptyItems = document.getElementById('emptyItems');
+        const emptyRoles = document.getElementById('emptyRoles');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Timer and Stopwatch Elements
+        const timerHours = document.getElementById('timerHours');
+        const timerMinutes = document.getElementById('timerMinutes');
+        const timerSeconds = document.getElementById('timerSeconds');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startTimerBtn = document.getElementById('startTimerBtn');
+        const pauseTimerBtn = document.getElementById('pauseTimerBtn');
+        const resetTimerBtn = document.getElementById('resetTimerBtn');
+        const stopwatchDisplay = document.getElementById('stopwatchDisplay');
+        const startStopwatchBtn = document.getElementById('startStopwatchBtn');
+        const pauseStopwatchBtn = document.getElementById('pauseStopwatchBtn');
+        const resetStopwatchBtn = document.getElementById('resetStopwatchBtn');
+
+        // Task Elements
+        const todayTaskList = document.getElementById('todayTaskList');
+        const allTaskList = document.getElementById('allTaskList');
+        const newTodayTask = document.getElementById('newTodayTask');
+        const newTask = document.getElementById('newTask');
+        const addTodayTaskBtn = document.getElementById('addTodayTaskBtn');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const emptyTodayTasks = document.getElementById('emptyTodayTasks');
+        const emptyAllTasks = document.getElementById('emptyAllTasks');
+        const taskFilters = document.querySelectorAll('.task-filter');
+
+        // Constants
+        const CORRECT_PASSWORD = "creeper_dev_1111";
+        const AUTH_KEY = "constructionManagerAuth";
+
+        // State
+        let items = [];
+        let roles = [];
+        let progress = 0;
+        let darkMode = false;
+        let isAuthenticated = false;
+        let timerInterval = null;
+        let timerTimeLeft = 0;
+        let timerRunning = false;
+        let stopwatchInterval = null;
+        let stopwatchTime = 0;
+        let stopwatchRunning = false;
+        let todayTasks = [];
+        let allTasks = [];
+        let todayTaskFilter = 'all';
+        let allTaskFilter = 'all';
+
+        // Check if user is authenticated
+        function checkAuthentication() {
+            const auth = localStorage.getItem(AUTH_KEY);
+            isAuthenticated = auth === "true";
+            
+            if (isAuthenticated) {
+                loginOverlay.style.display = "none";
+            } else {
+                loginOverlay.style.display = "flex";
+            }
+        }
+
+        // Handle login
+        function handleLogin() {
+            const password = passwordInput.value;
+            
+            if (password === CORRECT_PASSWORD) {
+                localStorage.setItem(AUTH_KEY, "true");
+                isAuthenticated = true;
+                loginOverlay.style.display = "none";
+                errorMessage.textContent = "";
+                passwordInput.value = "";
+            } else {
+                errorMessage.textContent = "Incorrect password. Please try again.";
+                passwordInput.value = "";
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            localStorage.removeItem(AUTH_KEY);
+            isAuthenticated = false;
+            loginOverlay.style.display = "flex";
+        }
+
+        // Format time for display (HH:MM:SS)
+        function formatTime(timeInSeconds) {
+            const hours = Math.floor(timeInSeconds / 3600);
+            const minutes = Math.floor((timeInSeconds % 3600) / 60);
+            const seconds = timeInSeconds % 60;
+            
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                seconds.toString().padStart(2, '0')
+            ].join(':');
+        }
+
+        // Start timer
+        function startTimer() {
+            if (timerRunning) return;
+            
+            if (timerTimeLeft === 0) {
+                // Get time from inputs
+                const hours = parseInt(timerHours.value) || 0;
+                const minutes = parseInt(timerMinutes.value) || 0;
+                const seconds = parseInt(timerSeconds.value) || 0;
+                
+                timerTimeLeft = hours * 3600 + minutes * 60 + seconds;
+                
+                if (timerTimeLeft === 0) return; // Don't start if no time set
+            }
+            
+            timerRunning = true;
+            startTimerBtn.disabled = true;
+            pauseTimerBtn.disabled = false;
+            
+            timerInterval = setInterval(() => {
+                timerTimeLeft--;
+                timerDisplay.textContent = formatTime(timerTimeLeft);
+                
+                if (timerTimeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    timerTimeLeft = 0;
+                    startTimerBtn.disabled = false;
+                    pauseTimerBtn.disabled = true;
+                    
+                    // Alert when timer finishes
+                    alert("Timer finished!");
+                }
+            }, 1000);
+        }
+
+        // Pause timer
+        function pauseTimer() {
+            if (!timerRunning) return;
+            
+            clearInterval(timerInterval);
+            timerRunning = false;
+            startTimerBtn.disabled = false;
+            pauseTimerBtn.disabled = true;
+        }
+
+        // Reset timer
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerTimeLeft = 0;
+            timerDisplay.textContent = "00:00:00";
+            timerHours.value = "0";
+            timerMinutes.value = "0";
+            timerSeconds.value = "0";
+            startTimerBtn.disabled = false;
+            pauseTimerBtn.disabled = true;
+        }
+
+        // Start stopwatch
+        function startStopwatch() {
+            if (stopwatchRunning) return;
+            
+            stopwatchRunning = true;
+            startStopwatchBtn.disabled = true;
+            pauseStopwatchBtn.disabled = false;
+            
+            const startTime = Date.now() - (stopwatchTime * 1000);
+            
+            stopwatchInterval = setInterval(() => {
+                stopwatchTime = Math.floor((Date.now() - startTime) / 1000);
+                stopwatchDisplay.textContent = formatTime(stopwatchTime);
+            }, 100);
+        }
+
+        // Pause stopwatch
+        function pauseStopwatch() {
+            if (!stopwatchRunning) return;
+            
+            clearInterval(stopwatchInterval);
+            stopwatchRunning = false;
+            startStopwatchBtn.disabled = false;
+            pauseStopwatchBtn.disabled = true;
+        }
+
+        // Reset stopwatch
+        function resetStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchRunning = false;
+            stopwatchTime = 0;
+            stopwatchDisplay.textContent = "00:00:00";
+            startStopwatchBtn.disabled = false;
+            pauseStopwatchBtn.disabled = true;
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(date);
+        }
+
+        // Check if a date is today
+        function isToday(date) {
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+        }
+
+        // Add a task
+        function addTask(taskList, task) {
+            const now = new Date();
+            
+            taskList.push({
+                id: Date.now().toString(),
+                title: task,
+                completed: false,
+                date: now
+            });
+            
+            saveData();
+            
+            if (taskList === todayTasks) {
+                renderTodayTasks();
+            } else {
+                renderAllTasks();
+            }
+        }
+
+        // Toggle task completion
+        function toggleTaskCompletion(taskList, id) {
+            const taskIndex = taskList.findIndex(task => task.id === id);
+            
+            if (taskIndex !== -1) {
+                taskList[taskIndex].completed = !taskList[taskIndex].completed;
+                saveData();
+                
+                if (taskList === todayTasks) {
+                    renderTodayTasks();
+                } else {
+                    renderAllTasks();
+                }
+            }
+        }
+
+        // Delete task
+        function deleteTask(taskList, id) {
+            const taskIndex = taskList.findIndex(task => task.id === id);
+            
+            if (taskIndex !== -1) {
+                taskList.splice(taskIndex, 1);
+                saveData();
+                
+                if (taskList === todayTasks) {
+                    renderTodayTasks();
+                } else {
+                    renderAllTasks();
+                }
+            }
+        }
+
+        // Filter tasks
+        function filterTasks(tasks, filter) {
+            if (filter === 'all') {
+                return tasks;
+            } else if (filter === 'active') {
+                return tasks.filter(task => !task.completed);
+            } else if (filter === 'completed') {
+                return tasks.filter(task => task.completed);
+            }
+            return tasks;
+        }
+
+        // Render today's tasks
+        function renderTodayTasks() {
+            todayTaskList.innerHTML = '';
+            
+            const filteredTasks = filterTasks(todayTasks, todayTaskFilter);
+            
+            if (filteredTasks.length === 0) {
+                emptyTodayTasks.style.display = 'block';
+            } else {
+                emptyTodayTasks.style.display = 'none';
+                
+                filteredTasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = `task-item ${task.completed ? 'task-completed' : ''}`;
+                    
+                    li.innerHTML = `
+                        <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-id="${task.id}" data-list="today"></div>
+                        <div class="task-content">
+                            <div class="task-title">${task.title}</div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-small btn-delete" data-action="delete-task" data-id="${task.id}" data-list="today">Delete</button>
+                        </div>
+                    `;
+                    
+                    todayTaskList.appendChild(li);
+                });
+            }
+            
+            // Add event listeners
+            document.querySelectorAll('.task-checkbox[data-list="today"]').forEach(checkbox => {
+                checkbox.addEventListener('click', () => {
+                    toggleTaskCompletion(todayTasks, checkbox.getAttribute('data-id'));
+                });
+            });
+            
+            document.querySelectorAll('[data-action="delete-task"][data-list="today"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    deleteTask(todayTasks, button.getAttribute('data-id'));
+                });
+            });
+        }
+
+        // Render all tasks
+        function renderAllTasks() {
+            allTaskList.innerHTML = '';
+            
+            const filteredTasks = filterTasks(allTasks, allTaskFilter);
+            
+            if (filteredTasks.length === 0) {
+                emptyAllTasks.style.display = 'block';
+            } else {
+                emptyAllTasks.style.display = 'none';
+                
+                filteredTasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = `task-item ${task.completed ? 'task-completed' : ''}`;
+                    
+                    li.innerHTML = `
+                        <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-id="${task.id}" data-list="all"></div>
+                        <div class="task-content">
+                            <div class="task-title">${task.title}</div>
+                            <div class="task-date">${formatDate(new Date(task.date))}</div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-small btn-delete" data-action="delete-task" data-id="${task.id}" data-list="all">Delete</button>
+                        </div>
+                    `;
+                    
+                    allTaskList.appendChild(li);
+                });
+            }
+            
+            // Add event listeners
+            document.querySelectorAll('.task-checkbox[data-list="all"]').forEach(checkbox => {
+                checkbox.addEventListener('click', () => {
+                    toggleTaskCompletion(allTasks, checkbox.getAttribute('data-id'));
+                });
+            });
+            
+            document.querySelectorAll('[data-action="delete-task"][data-list="all"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    deleteTask(allTasks, button.getAttribute('data-id'));
+                });
+            });
+        }
+
+        // Initialize
+        function init() {
+            checkAuthentication();
+            loadData();
+            renderItems();
+            renderRoles();
+            renderTodayTasks();
+            renderAllTasks();
+            updateProgress(progress);
+            setupEventListeners();
+        }
+
+        // Load data from localStorage
+        function loadData() {
+            const savedItems = localStorage.getItem('constructionItems');
+            const savedRoles = localStorage.getItem('constructionRoles');
+            const savedProgress = localStorage.getItem('constructionProgress');
+            const savedDarkMode = localStorage.getItem('darkMode');
+            const savedTodayTasks = localStorage.getItem('todayTasks');
+            const savedAllTasks = localStorage.getItem('allTasks');
+
+            if (savedItems) {
+                items = JSON.parse(savedItems);
+            } else {
+                // Default items
+                items = [
+                    { name: '羊毛', target: 10, current: 0 },
+                    { name: 'コンクリート', target: 20, current: 0 },
+                    { name: '染料', target: 5, current: 0 }
+                ];
+            }
+
+            if (savedRoles) {
+                roles = JSON.parse(savedRoles);
+            } else {
+                // Default roles
+                roles = [
+                    { name: 'しゅうき', yakuwari: 'アイス建築', disp: 'メモ' },
+                    { name: 'みこと', yakuwari: 'アイス建築', disp: 'メモ' },
+                    { name: 'しおん', yakuwari: 'からあげ建築', disp: 'メモ' },
+                    { name: 'りょうた', yakuwari: 'からあげ建築', disp: 'メモ' },
+                    { name: 'やまと', yakuwari: 'アイス材料集め', disp: 'メモ' },
+                    { name: 'ひなた', yakuwari: 'アイス材料集め', disp: 'メモ' },
+                    { name: 'ゆづき', yakuwari: 'からあげ材料集め', disp: 'メモ' }
+                ];
+            }
+
+            if (savedProgress) {
+                progress = parseInt(savedProgress);
+                progressSlider.value = progress;
+            }
+
+            if (savedDarkMode === 'true') {
+                darkMode = true;
+                darkModeToggle.checked = true;
+                document.body.classList.add('dark-mode');
+                modeText.textContent = 'Light Mode';
+            }
+            
+            if (savedTodayTasks) {
+                todayTasks = JSON.parse(savedTodayTasks);
+                
+                // Filter out tasks that are not from today
+                todayTasks = todayTasks.filter(task => isToday(new Date(task.date)));
+            }
+            
+            if (savedAllTasks) {
+                allTasks = JSON.parse(savedAllTasks);
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('constructionItems', JSON.stringify(items));
+            localStorage.setItem('constructionRoles', JSON.stringify(roles));
+            localStorage.setItem('constructionProgress', progress.toString());
+            localStorage.setItem('darkMode', darkMode.toString());
+            localStorage.setItem('todayTasks', JSON.stringify(todayTasks));
+            localStorage.setItem('allTasks', JSON.stringify(allTasks));
+        }
+
+        // Render items
+        function renderItems() {
+            itemList.innerHTML = '';
+            
+            if (items.length === 0) {
+                emptyItems.style.display = 'block';
+            } else {
+                emptyItems.style.display = 'none';
+                
+                items.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'item';
+                    
+                    const isCompleted = item.current >= item.target;
+                    const progressPercent = Math.min(100, Math.round((item.current / item.target) * 100));
+                    
+                    li.innerHTML = `
+                        <div class="item-details">
+                            <div class="${isCompleted ? 'item-name completed' : 'item-name'}">${item.name}</div>
+                            <div class="item-progress">
+                                <div class="item-progress-bar" style="width: ${progressPercent}%"></div>
+                            </div>
+                            <div class="item-status">${item.current} / ${item.target} (${progressPercent}%)</div>
+                        </div>
+                        <div class="item-counter">
+                            <button class="btn btn-small" data-action="decrease" data-index="${index}">-</button>
+                            <input type="number" value="${item.current}" min="0" data-index="${index}" class="item-input">
+                            <button class="btn btn-small" data-action="increase" data-index="${index}">+</button>
+                            <button class="btn btn-small btn-delete" data-action="delete" data-index="${index}" style="margin-left: 10px;">Delete</button>
+                        </div>
+                    `;
+                    itemList.appendChild(li);
+                });
+            }
+
+            // Add event listeners to buttons and inputs
+            document.querySelectorAll('.item-counter button').forEach(button => {
+                button.addEventListener('click', handleItemAction);
+            });
+
+            document.querySelectorAll('.item-input').forEach(input => {
+                input.addEventListener('change', handleItemInputChange);
+            });
+        }
+
+        // Render roles
+        function renderRoles() {
+            roleList.innerHTML = '';
+            
+            if (roles.length === 0) {
+                emptyRoles.style.display = 'block';
+            } else {
+                emptyRoles.style.display = 'none';
+                
+                // Group roles by yakuwari
+                const groupedRoles = {};
+                roles.forEach(role => {
+                    if (!groupedRoles[role.yakuwari]) {
+                        groupedRoles[role.yakuwari] = [];
+                    }
+                    groupedRoles[role.yakuwari].push(role);
+                });
+                
+                // Create a section for each role type
+                Object.entries(groupedRoles).forEach(([yakuwari, rolesInGroup]) => {
+                    const sectionHeader = document.createElement('div');
+                    sectionHeader.className = 'section-header';
+                    sectionHeader.innerHTML = `<h3>${yakuwari}</h3>`;
+                    roleList.appendChild(sectionHeader);
+                    
+                    rolesInGroup.forEach((role, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'role';
+                        
+                        // Find the actual index in the main roles array
+                        const roleIndex = roles.findIndex(r => 
+                            r.name === role.name && 
+                            r.yakuwari === role.yakuwari && 
+                            r.disp === role.disp
+                        );
+                        
+                        li.innerHTML = `
+                            <div class="role-name">${role.name}</div>
+                            <div class="role-details">
+                                <div class="role-disp">${role.disp}</div>
+                            </div>
+                            <button class="btn btn-small btn-delete" data-action="delete-role" data-index="${roleIndex}">Delete</button>
+                        `;
+                        roleList.appendChild(li);
+                    });
+                });
+            }
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll('[data-action="delete-role"]').forEach(button => {
+                button.addEventListener('click', handleRoleDelete);
+            });
+        }
+
+        // Update progress
+        function updateProgress(value) {
+            progress = value;
+            progressValue.textContent = `${progress}%`;
+            saveData();
+        }
+
+        // Handle item actions (increase, decrease, delete)
+        function handleItemAction(e) {
+            const action = e.target.getAttribute('data-action');
+            const index = parseInt(e.target.getAttribute('data-index'));
+            
+            if (action === 'increase') {
+                items[index].current++;
+            } else if (action === 'decrease') {
+                if (items[index].current > 0) {
+                    items[index].current--;
+                }
+            } else if (action === 'delete') {
+                items.splice(index, 1);
+            }
+            
+            saveData();
+            renderItems();
+        }
+
+        // Handle item input change
+        function handleItemInputChange(e) {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            const value = parseInt(e.target.value);
+            
+            if (!isNaN(value) && value >= 0) {
+                items[index].current = value;
+                saveData();
+                renderItems();
+            }
+        }
+
+        // Handle role delete
+        function handleRoleDelete(e) {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            roles.splice(index, 1);
+            saveData();
+            renderRoles();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Login button
+            loginBtn.addEventListener('click', handleLogin);
+            
+            // Password input enter key
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            // Logout button
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Dark mode toggle
+            darkModeToggle.addEventListener('change', () => {
+                darkMode = darkModeToggle.checked;
+                if (darkMode) {
+                    document.body.classList.add('dark-mode');
+                    modeText.textContent = 'Light Mode';
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    modeText.textContent = 'Dark Mode';
+                }
+                saveData();
+            });
+
+            // Progress slider
+            progressSlider.addEventListener('input', () => {
+                updateProgress(parseInt(progressSlider.value));
+            });
+
+            // Add item button
+            addItemBtn.addEventListener('click', () => {
+                const nameInput = document.getElementById('newItemName');
+                const targetInput = document.getElementById('newItemTarget');
+                
+                const name = nameInput.value.trim();
+                const target = parseInt(targetInput.value);
+                
+                if (name && !isNaN(target) && target > 0) {
+                    items.push({
+                        name,
+                        target,
+                        current: 0
+                    });
+                    
+                    nameInput.value = '';
+                    targetInput.value = '1';
+                    
+                    saveData();
+                    renderItems();
+                }
+            });
+
+            // Add role button
+            addRoleBtn.addEventListener('click', () => {
+                const nameInput = document.getElementById('newRoleName');
+                const yakuwariInput = document.getElementById('newRoleYakuwari');
+                const dispInput = document.getElementById('newRoleDisp');
+                
+                const name = nameInput.value.trim();
+                const yakuwari = yakuwariInput.value.trim();
+                const disp = dispInput.value.trim();
+                
+                if (name && yakuwari) {
+                    roles.push({
+                        name,
+                        yakuwari,
+                        disp: disp || 'Member'
+                    });
+                    
+                    nameInput.value = '';
+                    yakuwariInput.value = '';
+                    dispInput.value = '';
+                    
+                    saveData();
+                    renderRoles();
+                }
+            });
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${tabName}Tab`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Timer controls
+            startTimerBtn.addEventListener('click', startTimer);
+            pauseTimerBtn.addEventListener('click', pauseTimer);
+            resetTimerBtn.addEventListener('click', resetTimer);
+            
+            // Stopwatch controls
+            startStopwatchBtn.addEventListener('click', startStopwatch);
+            pauseStopwatchBtn.addEventListener('click', pauseStopwatch);
+            resetStopwatchBtn.addEventListener('click', resetStopwatch);
+            
+            // Add today task
+            addTodayTaskBtn.addEventListener('click', () => {
+                const taskText = newTodayTask.value.trim();
+                
+                if (taskText) {
+                    addTask(todayTasks, taskText);
+                    newTodayTask.value = '';
+                }
+            });
+            
+            // Add task
+            addTaskBtn.addEventListener('click', () => {
+                const taskText = newTask.value.trim();
+                
+                if (taskText) {
+                    addTask(allTasks, taskText);
+                    newTask.value = '';
+                }
+            });
+            
+            // Task filters
+            document.querySelectorAll('.task-filters').forEach(filterContainer => {
+                const filters = filterContainer.querySelectorAll('.task-filter');
+                
+                filters.forEach(filter => {
+                    filter.addEventListener('click', () => {
+                        // Remove active class from all filters in this container
+                        filters.forEach(f => f.classList.remove('active'));
+                        
+                        // Add active class to clicked filter
+                        filter.classList.add('active');
+                        
+                        const filterValue = filter.getAttribute('data-filter');
+                        
+                        // Determine which task list this filter belongs to
+                        const parentCard = filterContainer.closest('.card');
+                        if (parentCard.querySelector('h2').textContent === "Today's Tasks") {
+                            todayTaskFilter = filterValue;
+                            renderTodayTasks();
+                        } else {
+                            allTaskFilter = filterValue;
+                            renderAllTasks();
+                        }
+                    });
+                });
+            });
+            
+            // Enter key for task inputs
+            newTodayTask.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const taskText = newTodayTask.value.trim();
+                    
+                    if (taskText) {
+                        addTask(todayTasks, taskText);
+                        newTodayTask.value = '';
+                    }
+                }
+            });
+            
+            newTask.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const taskText = newTask.value.trim();
+                    
+                    if (taskText) {
+                        addTask(allTasks, taskText);
+                        newTask.value = '';
+                    }
+                }
+            });
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
