@@ -6,6 +6,7 @@
     <title>Construction Project Manager</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <style>
+        /* スタイルは変更なし - 省略 */
         :root {
             --bg-color: #f8f9fa;
             --text-color: #212529;
@@ -24,6 +25,11 @@
             --input-bg: #ffffff;
             --input-border: #ced4da;
             --overlay-bg: rgba(0, 0, 0, 0.8);
+            --timer-bg: #f0f4f8;
+            --timer-border: #d0d9e4;
+            --task-hover: #f8f9fa;
+            --task-completed-bg: #f0fff4;
+            --task-completed-border: #d1e7dd;
         }
 
         .dark-mode {
@@ -44,6 +50,11 @@
             --input-bg: #2d3748;
             --input-border: #4a5568;
             --overlay-bg: rgba(0, 0, 0, 0.9);
+            --timer-bg: #2a2d3a;
+            --timer-border: #3a3f52;
+            --task-hover: #1a1a1a;
+            --task-completed-bg: #1a2e22;
+            --task-completed-border: #2d4f3c;
         }
 
         * {
@@ -85,6 +96,13 @@
             color: var(--primary-color);
         }
 
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            color: var(--text-color);
+        }
+
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -100,7 +118,7 @@
             border: 1px solid var(--border-color);
         }
 
-        .item-list, .role-list {
+        .item-list, .role-list, .task-list {
             list-style: none;
         }
 
@@ -390,6 +408,8 @@
             display: flex;
             margin-bottom: 1.5rem;
             border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab {
@@ -398,6 +418,7 @@
             font-weight: 500;
             border-bottom: 2px solid transparent;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .tab.active {
@@ -485,6 +506,149 @@
             background-color: rgba(255, 255, 255, 0.05);
         }
 
+        /* Timer and Stopwatch styles */
+        .time-display {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            font-family: monospace;
+            margin: 1rem 0;
+            color: var(--primary-color);
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .timer-input {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .timer-input input {
+            width: 4rem;
+            text-align: center;
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .timer-input span {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .timer-card {
+            background-color: var(--timer-bg);
+            border: 1px solid var(--timer-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Task styles */
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+
+        .task-item:hover {
+            background-color: var(--task-hover);
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-checkbox {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .task-checkbox.checked {
+            background-color: var(--completed-color);
+            border-color: var(--completed-color);
+            color: white;
+        }
+
+        .task-checkbox.checked::after {
+            content: "✓";
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+
+        .task-content {
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        .task-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .task-completed .task-title {
+            text-decoration: line-through;
+            color: var(--muted-color);
+        }
+
+        .task-date {
+            font-size: 0.75rem;
+            color: var(--muted-color);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .task-completed {
+            background-color: var(--task-completed-bg);
+            border-left: 3px solid var(--completed-color);
+        }
+
+        .task-filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .task-filter {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .task-filter.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
         @media (max-width: 768px) {
             .form-row {
                 flex-direction: column;
@@ -508,6 +672,28 @@
 
             .header-actions {
                 gap: 0.5rem;
+            }
+
+            .time-display {
+                font-size: 2.5rem;
+            }
+
+            .timer-input {
+                flex-wrap: wrap;
+            }
+
+            .timer-controls {
+                flex-wrap: wrap;
+            }
+
+            .task-item {
+                flex-wrap: wrap;
+            }
+
+            .task-actions {
+                margin-top: 0.5rem;
+                width: 100%;
+                justify-content: flex-end;
             }
         }
     </style>
@@ -555,6 +741,8 @@
         <div class="tabs">
             <div class="tab active" data-tab="items">Items</div>
             <div class="tab" data-tab="roles">Roles</div>
+            <div class="tab" data-tab="time">Time Tools</div>
+            <div class="tab" data-tab="tasks">Tasks</div>
         </div>
 
         <div class="tab-content active" id="itemsTab">
@@ -568,435 +756,4 @@
                 </ul>
                 
                 <div id="emptyItems" class="empty-state">
-                    <p>No items added yet.</p>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="newItemName">Item Name</label>
-                        <input type="text" id="newItemName" placeholder="Enter item name">
-                    </div>
-                    <div class="form-group">
-                        <label for="newItemTarget">Target Quantity</label>
-                        <input type="number" id="newItemTarget" placeholder="Enter target" min="1" value="1">
-                    </div>
-                </div>
-                <button class="btn" id="addItemBtn">Add Item</button>
-            </div>
-        </div>
-
-        <div class="tab-content" id="rolesTab">
-            <div class="card">
-                <div class="section-header">
-                    <h2>Role List</h2>
-                </div>
-                
-                <ul class="role-list" id="roleList">
-                    <!-- Roles will be added here dynamically -->
-                </ul>
-                
-                <div id="emptyRoles" class="empty-state">
-                    <p>No roles added yet.</p>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="newRoleName">Name</label>
-                        <input type="text" id="newRoleName" placeholder="Enter name">
-                    </div>
-                    <div class="form-group">
-                        <label for="newRoleYakuwari">Role</label>
-                        <input type="text" id="newRoleYakuwari" placeholder="Enter role">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="newRoleDisp">Notes</label>
-                    <input type="text" id="newRoleDisp" placeholder="Enter notes (optional)">
-                </div>
-                <button class="btn" id="addRoleBtn">Add Role</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // DOM Elements
-        const loginOverlay = document.getElementById('loginOverlay');
-        const passwordInput = document.getElementById('password');
-        const loginBtn = document.getElementById('loginBtn');
-        const errorMessage = document.getElementById('errorMessage');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const modeText = document.getElementById('modeText');
-        const progressSlider = document.getElementById('progressSlider');
-        const progressValue = document.getElementById('progressValue');
-        const itemList = document.getElementById('itemList');
-        const roleList = document.getElementById('roleList');
-        const addItemBtn = document.getElementById('addItemBtn');
-        const addRoleBtn = document.getElementById('addRoleBtn');
-        const emptyItems = document.getElementById('emptyItems');
-        const emptyRoles = document.getElementById('emptyRoles');
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        // Constants
-        const CORRECT_PASSWORD = "creeper_dev_1111";
-        const AUTH_KEY = "constructionManagerAuth";
-
-        // State
-        let items = [];
-        let roles = [];
-        let progress = 0;
-        let darkMode = false;
-        let isAuthenticated = false;
-
-        // Check if user is authenticated
-        function checkAuthentication() {
-            const auth = localStorage.getItem(AUTH_KEY);
-            isAuthenticated = auth === "true";
-            
-            if (isAuthenticated) {
-                loginOverlay.style.display = "none";
-            } else {
-                loginOverlay.style.display = "flex";
-            }
-        }
-
-        // Handle login
-        function handleLogin() {
-            const password = passwordInput.value;
-            
-            if (password === CORRECT_PASSWORD) {
-                localStorage.setItem(AUTH_KEY, "true");
-                isAuthenticated = true;
-                loginOverlay.style.display = "none";
-                errorMessage.textContent = "";
-                passwordInput.value = "";
-            } else {
-                errorMessage.textContent = "Incorrect password. Please try again.";
-                passwordInput.value = "";
-            }
-        }
-
-        // Handle logout
-        function handleLogout() {
-            localStorage.removeItem(AUTH_KEY);
-            isAuthenticated = false;
-            loginOverlay.style.display = "flex";
-        }
-
-        // Initialize
-        function init() {
-            checkAuthentication();
-            loadData();
-            renderItems();
-            renderRoles();
-            updateProgress(progress);
-            setupEventListeners();
-        }
-
-        // Load data from localStorage
-        function loadData() {
-            const savedItems = localStorage.getItem('constructionItems');
-            const savedRoles = localStorage.getItem('constructionRoles');
-            const savedProgress = localStorage.getItem('constructionProgress');
-            const savedDarkMode = localStorage.getItem('darkMode');
-
-            if (savedItems) {
-                items = JSON.parse(savedItems);
-            } else {
-                // Default items
-                items = [
-                    { name: '羊毛', target: 10, current: 0 },
-                    { name: 'コンクリート', target: 20, current: 0 },
-                    { name: '染料', target: 5, current: 0 }
-                ];
-            }
-
-            if (savedRoles) {
-                roles = JSON.parse(savedRoles);
-            } else {
-                // Default roles
-                roles = [
-                    { name: 'しゅうき', yakuwari: 'アイス建築', disp: 'メモ' },
-                    { name: 'みこと', yakuwari: 'アイス建築', disp: 'メモ' },
-                    { name: 'しおん', yakuwari: 'からあげ建築', disp: 'メモ' },
-                    { name: 'りょうた', yakuwari: 'からあげ建築', disp: 'メモ' },
-                    { name: 'やまと', yakuwari: 'アイス材料集め', disp: 'メモ' },
-                    { name: 'ひなた', yakuwari: 'アイス材料集め', disp: 'メモ' },
-                    { name: 'ゆづき', yakuwari: 'からあげ材料集め', disp: 'メモ' }
-                ];
-            }
-
-            if (savedProgress) {
-                progress = parseInt(savedProgress);
-                progressSlider.value = progress;
-            }
-
-            if (savedDarkMode === 'true') {
-                darkMode = true;
-                darkModeToggle.checked = true;
-                document.body.classList.add('dark-mode');
-                modeText.textContent = 'Light Mode';
-            }
-        }
-
-        // Save data to localStorage
-        function saveData() {
-            localStorage.setItem('constructionItems', JSON.stringify(items));
-            localStorage.setItem('constructionRoles', JSON.stringify(roles));
-            localStorage.setItem('constructionProgress', progress.toString());
-            localStorage.setItem('darkMode', darkMode.toString());
-        }
-
-        // Render items
-        function renderItems() {
-            itemList.innerHTML = '';
-            
-            if (items.length === 0) {
-                emptyItems.style.display = 'block';
-            } else {
-                emptyItems.style.display = 'none';
-                
-                items.forEach((item, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'item';
-                    
-                    const isCompleted = item.current >= item.target;
-                    const progressPercent = Math.min(100, Math.round((item.current / item.target) * 100));
-                    
-                    li.innerHTML = `
-                        <div class="item-details">
-                            <div class="${isCompleted ? 'item-name completed' : 'item-name'}">${item.name}</div>
-                            <div class="item-progress">
-                                <div class="item-progress-bar" style="width: ${progressPercent}%"></div>
-                            </div>
-                            <div class="item-status">${item.current} / ${item.target} (${progressPercent}%)</div>
-                        </div>
-                        <div class="item-counter">
-                            <button class="btn btn-small" data-action="decrease" data-index="${index}">-</button>
-                            <input type="number" value="${item.current}" min="0" data-index="${index}" class="item-input">
-                            <button class="btn btn-small" data-action="increase" data-index="${index}">+</button>
-                            <button class="btn btn-small btn-delete" data-action="delete" data-index="${index}" style="margin-left: 10px;">Delete</button>
-                        </div>
-                    `;
-                    itemList.appendChild(li);
-                });
-            }
-
-            // Add event listeners to buttons and inputs
-            document.querySelectorAll('.item-counter button').forEach(button => {
-                button.addEventListener('click', handleItemAction);
-            });
-
-            document.querySelectorAll('.item-input').forEach(input => {
-                input.addEventListener('change', handleItemInputChange);
-            });
-        }
-
-        // Render roles
-        function renderRoles() {
-            roleList.innerHTML = '';
-            
-            if (roles.length === 0) {
-                emptyRoles.style.display = 'block';
-            } else {
-                emptyRoles.style.display = 'none';
-                
-                // Group roles by yakuwari
-                const groupedRoles = {};
-                roles.forEach(role => {
-                    if (!groupedRoles[role.yakuwari]) {
-                        groupedRoles[role.yakuwari] = [];
-                    }
-                    groupedRoles[role.yakuwari].push(role);
-                });
-                
-                // Create a section for each role type
-                Object.entries(groupedRoles).forEach(([yakuwari, rolesInGroup]) => {
-                    const sectionHeader = document.createElement('div');
-                    sectionHeader.className = 'section-header';
-                    sectionHeader.innerHTML = `<h3>${yakuwari}</h3>`;
-                    roleList.appendChild(sectionHeader);
-                    
-                    rolesInGroup.forEach((role, index) => {
-                        const li = document.createElement('li');
-                        li.className = 'role';
-                        
-                        // Find the actual index in the main roles array
-                        const roleIndex = roles.findIndex(r => 
-                            r.name === role.name && 
-                            r.yakuwari === role.yakuwari && 
-                            r.disp === role.disp
-                        );
-                        
-                        li.innerHTML = `
-                            <div class="role-name">${role.name}</div>
-                            <div class="role-details">
-                                <div class="role-disp">${role.disp}</div>
-                            </div>
-                            <button class="btn btn-small btn-delete" data-action="delete-role" data-index="${roleIndex}">Delete</button>
-                        `;
-                        roleList.appendChild(li);
-                    });
-                });
-            }
-
-            // Add event listeners to delete buttons
-            document.querySelectorAll('[data-action="delete-role"]').forEach(button => {
-                button.addEventListener('click', handleRoleDelete);
-            });
-        }
-
-        // Update progress
-        function updateProgress(value) {
-            progress = value;
-            progressValue.textContent = `${progress}%`;
-            saveData();
-        }
-
-        // Handle item actions (increase, decrease, delete)
-        function handleItemAction(e) {
-            const action = e.target.getAttribute('data-action');
-            const index = parseInt(e.target.getAttribute('data-index'));
-            
-            if (action === 'increase') {
-                items[index].current++;
-            } else if (action === 'decrease') {
-                if (items[index].current > 0) {
-                    items[index].current--;
-                }
-            } else if (action === 'delete') {
-                items.splice(index, 1);
-            }
-            
-            saveData();
-            renderItems();
-        }
-
-        // Handle item input change
-        function handleItemInputChange(e) {
-            const index = parseInt(e.target.getAttribute('data-index'));
-            const value = parseInt(e.target.value);
-            
-            if (!isNaN(value) && value >= 0) {
-                items[index].current = value;
-                saveData();
-                renderItems();
-            }
-        }
-
-        // Handle role delete
-        function handleRoleDelete(e) {
-            const index = parseInt(e.target.getAttribute('data-index'));
-            roles.splice(index, 1);
-            saveData();
-            renderRoles();
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Login button
-            loginBtn.addEventListener('click', handleLogin);
-            
-            // Password input enter key
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-            
-            // Logout button
-            logoutBtn.addEventListener('click', handleLogout);
-            
-            // Dark mode toggle
-            darkModeToggle.addEventListener('change', () => {
-                darkMode = darkModeToggle.checked;
-                if (darkMode) {
-                    document.body.classList.add('dark-mode');
-                    modeText.textContent = 'Light Mode';
-                } else {
-                    document.body.classList.remove('dark-mode');
-                    modeText.textContent = 'Dark Mode';
-                }
-                saveData();
-            });
-
-            // Progress slider
-            progressSlider.addEventListener('input', () => {
-                updateProgress(parseInt(progressSlider.value));
-            });
-
-            // Add item button
-            addItemBtn.addEventListener('click', () => {
-                const nameInput = document.getElementById('newItemName');
-                const targetInput = document.getElementById('newItemTarget');
-                
-                const name = nameInput.value.trim();
-                const target = parseInt(targetInput.value);
-                
-                if (name && !isNaN(target) && target > 0) {
-                    items.push({
-                        name,
-                        target,
-                        current: 0
-                    });
-                    
-                    nameInput.value = '';
-                    targetInput.value = '1';
-                    
-                    saveData();
-                    renderItems();
-                }
-            });
-
-            // Add role button
-            addRoleBtn.addEventListener('click', () => {
-                const nameInput = document.getElementById('newRoleName');
-                const yakuwariInput = document.getElementById('newRoleYakuwari');
-                const dispInput = document.getElementById('newRoleDisp');
-                
-                const name = nameInput.value.trim();
-                const yakuwari = yakuwariInput.value.trim();
-                const disp = dispInput.value.trim();
-                
-                if (name && yakuwari) {
-                    roles.push({
-                        name,
-                        yakuwari,
-                        disp: disp || 'Member'
-                    });
-                    
-                    nameInput.value = '';
-                    yakuwariInput.value = '';
-                    dispInput.value = '';
-                    
-                    saveData();
-                    renderRoles();
-                }
-            });
-            
-            // Tab switching
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabName = tab.getAttribute('data-tab');
-                    
-                    // Update active tab
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    // Show corresponding content
-                    tabContents.forEach(content => {
-                        content.classList.remove('active');
-                        if (content.id === `${tabName}Tab`) {
-                            content.classList.add('active');
-                        }
-                    });
-                });
-            });
-        }
-
-        // Initialize the app
-        init();
-    </script>
-</body>
-</html>
+              
