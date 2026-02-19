@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>体温記録</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: linear-gradient(145deg, #ffffff 0%, #e8f0fb 50%, #daeaf8 100%);
+    --surface: rgba(255,255,255,0.85);
+    --surface2: rgba(240,246,255,0.9);
+    --border: #d0dce8;
+    --border-light: #e4edf5;
+    --accent: #2563eb;
+    --accent-light: rgba(37,99,235,0.1);
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+    --danger-light: rgba(220,38,38,0.08);
+    --warn: #d97706;
+    --warn-light: rgba(217,119,6,0.1);
+    --success: #059669;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --selected-bg: rgba(37,99,235,0.07);
+    --selected-border: #2563eb;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(37,99,235,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 32px;
+    height: 76px;
+    border-bottom: 1px solid var(--border-light);
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(12px);
+    flex-shrink: 0;
+  }
+
+  .big-clock {
+    font-family: 'DM Mono', monospace;
+    font-size: 44px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    line-height: 1;
+    text-align: right;
+  }
+
+  .big-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    margin-top: 3px;
+    text-align: right;
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .name-panel {
+    border-right: 1px solid var(--border-light);
+    overflow-y: auto;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(255,255,255,0.5);
+  }
+
+  .name-item {
+    display: flex;
+    align-items: center;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.14s;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .name-item:hover { background: rgba(37,99,235,0.05); border-color: var(--border); }
+  .name-item.selected { background: var(--selected-bg); border-color: var(--selected-border); color: var(--accent); font-weight: 600; }
+
+  .input-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    padding: 40px;
+    overflow-y: auto;
+  }
+
+  .selected-badge {
+    background: rgba(255,255,255,0.8);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 9px 26px;
+    font-size: 15px;
+    color: var(--text-muted);
+    transition: all 0.3s;
+    min-width: 220px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+
+  .selected-badge.active {
+    background: var(--selected-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .temp-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .temp-label-text {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .temp-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.9);
+    border: 2px solid var(--border);
+    border-radius: 22px;
+    padding: 14px 32px;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+  }
+
+  .temp-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.1), var(--shadow);
+  }
+
+  .temp-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 62px;
+    font-weight: 400;
+    color: var(--text);
+    width: 175px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  .temp-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    color: var(--text-muted);
+    padding-top: 10px;
+  }
+
+  .submit-btn {
+    padding: 15px 70px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.3);
+  }
+
+  .submit-btn:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,235,0.38); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .admin-btn {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .admin-btn:hover { border-color: var(--accent); color: var(--accent); transform: rotate(18deg); box-shadow: var(--shadow-lg); }
+
+  /* MODALS */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,25,50,0.35);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: rgba(255,255,255,0.97);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 30px;
+    transform: translateY(14px) scale(0.97);
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-h { font-size: 17px; font-weight: 700; margin-bottom: 5px; color: var(--text); }
+  .modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6; }
+
+  .modal-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 15px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-error { font-size: 12px; color: var(--danger); min-height: 16px; margin-bottom: 10px; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+
+  .btn-primary {
+    flex: 1;
+    padding: 11px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .btn-secondary {
+    padding: 11px 18px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { color: var(--text); border-color: var(--text-muted); background: var(--surface2); }
+
+  /* ADMIN MODAL */
+  .admin-modal { width: min(96vw, 880px); max-height: 90vh; display: flex; flex-direction: column; }
+
+  .admin-tabs {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 18px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    border: 1px solid var(--border-light);
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.03em;
+  }
+
+  .tab-btn.active { background: #fff; color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  .tab-content { display: none; flex: 1; overflow-y: auto; }
+  .tab-content.active { display: block; }
+
+  /* STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.04em; }
+
+  /* TABLE */
+  .tbl-wrap {
+    overflow-x: auto;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+  }
+
+  .records-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  .records-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border-light);
+    position: sticky;
+    top: 0;
+    background: #f5f8ff;
+    z-index: 1;
+    white-space: nowrap;
+  }
+
+  .records-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .records-table tbody tr:last-child td { border-bottom: none; }
+  .records-table tbody tr:hover td { background: rgba(37,99,235,0.03); }
+
+  .temp-cell { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--accent); }
+  .temp-cell.fever { color: var(--danger); }
+  .temp-cell.high-fever { color: #7c2d12; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+
+  .badge-fever      { background: var(--danger-light); color: var(--danger); }
+  .badge-high-fever { background: rgba(124,45,18,0.1); color: #7c2d12; }
+  .badge-ok         { background: rgba(5,150,105,0.09); color: var(--success); }
+  .badge-home       { background: var(--warn-light); color: var(--warn); }
+
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 9px;
+    border-radius: var(--radius-xs);
+    transition: all 0.15s;
+    line-height: 1;
+    color: var(--text-muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+  }
+
+  .icon-btn:hover { background: var(--surface2); color: var(--text); }
+  .icon-btn.del:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+
+  .action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 12px;
+  }
+
+  .search-input {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    width: 190px;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-light); }
+
+  .small-btn {
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-csv { background: rgba(37,99,235,0.07); border-color: rgba(37,99,235,0.2); color: var(--accent); }
+  .btn-csv:hover { background: rgba(37,99,235,0.14); }
+  .btn-del { background: var(--danger-light); border-color: rgba(220,38,38,0.25); color: var(--danger); }
+  .btn-del:hover { background: rgba(220,38,38,0.15); }
+
+  /* DEPARTURE */
+  .depart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    max-height: 370px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+  }
+
+  .depart-card {
+    display: flex;
+    align-items: center;
+    padding: 13px 15px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .depart-card:hover { background: var(--surface2); border-color: var(--border); }
+  .depart-card.done { opacity: 0.5; cursor: default; pointer-events: none; }
+
+  .depart-name-t { font-size: 13px; font-weight: 500; color: var(--text); }
+  .depart-time-t { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--warn); margin-top: 2px; font-weight: 500; }
+  .depart-hint   { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+  /* SETTINGS */
+  .settings-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-light);
+    gap: 16px;
+  }
+
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-label { font-size: 14px; font-weight: 500; color: var(--text); }
+  .settings-row-sub   { font-size: 12px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+
+  .pw-row { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .pw-input {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 14px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    width: 190px;
+    letter-spacing: 0.08em;
+    transition: border-color 0.2s;
+  }
+
+  .pw-input:focus { border-color: var(--accent); }
+
+  /* CSV config */
+  .csv-config {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .csv-col-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+  }
+
+  .csv-col-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: var(--radius-xs);
+    cursor: grab;
+    user-select: none;
+    transition: background 0.12s;
+    font-size: 13px;
+    color: var(--text);
+    background: #fff;
+    border: 1px solid var(--border-light);
+  }
+
+  .csv-col-item.dragging { opacity: 0.4; }
+  .csv-col-item.drag-over { border-color: var(--accent); background: var(--selected-bg); }
+
+  .csv-col-item input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+  .csv-drag-handle { color: var(--text-light); font-size: 14px; cursor: grab; flex-shrink: 0; }
+  .csv-col-label { flex: 1; font-weight: 500; }
+  .csv-col-key { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-light); }
+
+  /* EDIT MODAL */
+  .edit-modal { width: 360px; }
+  .edit-field { margin-bottom: 15px; }
+  .edit-field label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .edit-field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .edit-field input:focus { border-color: var(--accent); }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: rgba(255,255,255,0.97);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 10px 26px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 500;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: var(--shadow-lg);
+    color: var(--accent);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="big-clock" id="bigClock">--:--:--</div>
+    <div class="big-date" id="bigDate"></div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="name-panel" id="namePanel"></div>
+
+  <div class="input-panel">
+    <div class="selected-badge" id="selectedBadge">ユーザーを選択してください</div>
+
+    <div class="temp-block">
+      <div class="temp-label-text">体　温</div>
+      <div class="temp-wrap" id="tempWrap">
+        <input class="temp-input" type="number" id="tempInput"
+          value="36.0" step="0.1" min="34.0" max="42.0">
+        <div class="temp-unit">°C</div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="recordData()" disabled>
+      記　録
+    </button>
+  </div>
+</div>
+
+<button class="admin-btn" title="管理" onclick="openAdminAuth()">&#9881;</button>
+<div class="toast" id="toast"></div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal" style="width:340px">
+    <div class="modal-h">管理者認証</div>
+    <div class="modal-sub">パスワードを入力してください</div>
+    <input class="modal-input" type="password" id="authInput" placeholder="パスワード"
+      onkeydown="if(event.key==='Enter')verifyAuth()">
+    <div class="modal-error" id="authError"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('authModal')">キャンセル</button>
+      <button class="btn-primary" onclick="verifyAuth()">認証</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal admin-modal">
+    <div class="modal-h">管理パネル</div>
+    <div class="modal-sub" style="margin-bottom:14px">記録の確認・帰宅管理・設定</div>
+
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('records')">記録履歴</button>
+      <button class="tab-btn" onclick="switchTab('depart')">帰宅記録</button>
+      <button class="tab-btn" onclick="switchTab('settings')">設定</button>
+    </div>
+
+    <!-- TAB: RECORDS -->
+    <div class="tab-content active" id="tab-records">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="action-bar">
+        <input class="search-input" type="text" placeholder="名前・体温で検索..."
+          id="recordSearch" oninput="renderRecordsTable()">
+        <div style="display:flex;gap:8px">
+          <button class="small-btn btn-csv" onclick="exportCSV()">CSV出力</button>
+          <button class="small-btn btn-del" onclick="clearAllData()">全削除</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="records-table">
+          <thead>
+            <tr id="recordsTableHead"></tr>
+          </thead>
+          <tbody id="recordsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: DEPART -->
+    <div class="tab-content" id="tab-depart">
+      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px">
+        カードをタップすると現在時刻で帰宅時刻を記録します
+      </div>
+      <div class="depart-grid" id="departGrid"></div>
+      <button class="btn-secondary" style="width:100%;font-size:13px"
+        onclick="resetDepartures()">本日の帰宅記録をリセット</button>
+    </div>
+
+    <!-- TAB: SETTINGS -->
+    <div class="tab-content" id="tab-settings">
+
+      <!-- Password -->
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">パスワード変更</div>
+          <div class="settings-row-sub">管理画面のアクセスパスワード</div>
+        </div>
+        <div class="pw-row">
+          <input class="pw-input" type="password" id="newPwInput" placeholder="新しいパスワード">
+          <button class="btn-primary" style="flex:0 0 auto;padding:9px 16px;font-size:13px"
+            onclick="changePassword()">変更</button>
+        </div>
+      </div>
+
+      <!-- CSV columns -->
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start">
+        <div style="margin-bottom:12px;width:100%;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="settings-row-label">CSV出力の列設定</div>
+            <div class="settings-row-sub">チェックで出力する列を選択、ドラッグで並び替え</div>
+          </div>
+          <button class="small-btn btn-csv" onclick="resetCsvCols()" style="flex-shrink:0">リセット</button>
+        </div>
+        <div class="csv-col-list" id="csvColList"></div>
+      </div>
+
+      <!-- Mail -->
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">メール送信</div>
+          <div class="settings-row-sub">記録データをメールで送信する機能（近日公開）</div>
+        </div>
+        <button class="btn-secondary" style="font-size:12px;opacity:0.4;cursor:not-allowed;flex-shrink:0">近日公開</button>
+      </div>
+
+    </div>
+
+    <div style="margin-top:20px;border-top:1px solid var(--border-light);padding-top:18px">
+      <button class="btn-secondary" style="width:100%" onclick="closeModal('adminModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal edit-modal">
+    <div class="modal-h">記録を編集</div>
+    <div class="modal-sub">内容を修正して保存してください</div>
+    <input type="hidden" id="editId">
+    <div class="edit-field">
+      <label>体温 (°C)</label>
+      <input type="number" id="editTemp" step="0.1" min="34" max="42">
+    </div>
+    <div class="edit-field">
+      <label>記録日時</label>
+      <input type="text" id="editTime">
+    </div>
+    <div class="edit-field">
+      <label>帰宅時刻（空白で未記録）</label>
+      <input type="text" id="editDepart" placeholder="例: 17:30:00">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('editModal')">キャンセル</button>
+      <button class="btn-primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// 名前リスト — ここを編集して名前を管理
+// =====================================================
+const NAMES = [
+  { id: 1, name: '山田 太郎' },
+  { id: 2, name: '鈴木 花子' },
+  { id: 3, name: '佐藤 健'   },
+  { id: 4, name: '田中 美咲' },
+  { id: 5, name: '伊藤 直人' },
+  { id: 6, name: '渡辺 さくら' },
+];
+
+// =====================================================
+// 体温の閾値設定 — ここを変更して判断基準を設定
+// =====================================================
+const THRESHOLDS = {
+  FEVER:      37.5,   // 発熱と判断する体温 (°C)
+  HIGH_FEVER: 38.5,   // 高熱と判断する体温 (°C)
+};
+// =====================================================
+
+// CSV列の定義
+const CSV_COLS_DEFAULT = [
+  { key: 'name',        label: '氏名',       enabled: true  },
+  { key: 'temp',        label: '体温(°C)',    enabled: true  },
+  { key: 'status',      label: '状態',        enabled: true  },
+  { key: 'displayTime', label: '記録日時',    enabled: true  },
+  { key: 'departTime',  label: '帰宅時刻',    enabled: true  },
+  { key: 'timestamp',   label: 'タイムスタンプ(ISO)', enabled: false },
+];
+
+// STATE
+let records    = JSON.parse(localStorage.getItem('hcRec4')  || '[]');
+let departures = JSON.parse(localStorage.getItem('hcDep4')  || '{}');
+let adminPw    = localStorage.getItem('hcPw')               || 'test1234';
+let csvCols    = JSON.parse(localStorage.getItem('hcCsvCols') || 'null') || JSON.parse(JSON.stringify(CSV_COLS_DEFAULT));
+let selectedName = null;
+
+const saveRecords    = () => localStorage.setItem('hcRec4',    JSON.stringify(records));
+const saveDepartures = () => localStorage.setItem('hcDep4',    JSON.stringify(departures));
+const saveCsvCols    = () => localStorage.setItem('hcCsvCols', JSON.stringify(csvCols));
+
+// Derive status string for a temp value
+function getStatus(temp) {
+  if (temp >= THRESHOLDS.HIGH_FEVER) return '高熱';
+  if (temp >= THRESHOLDS.FEVER)      return '発熱';
+  return '正常';
+}
+
+function getStatusBadgeClass(temp) {
+  if (temp >= THRESHOLDS.HIGH_FEVER) return 'badge-high-fever';
+  if (temp >= THRESHOLDS.FEVER)      return 'badge-fever';
+  return 'badge-ok';
+}
+
+function getTempCellClass(temp) {
+  if (temp >= THRESHOLDS.HIGH_FEVER) return 'high-fever';
+  if (temp >= THRESHOLDS.FEVER)      return 'fever';
+  return '';
+}
+
+// ---- CLOCK ----
+function updateClock() {
+  const now = new Date();
+  document.getElementById('bigClock').textContent =
+    now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+  document.getElementById('bigDate').textContent =
+    now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ---- NAME LIST ----
+function renderNames() {
+  document.getElementById('namePanel').innerHTML = NAMES.map(n => `
+    <div class="name-item ${selectedName?.id === n.id ? 'selected' : ''}" onclick="selectName(${n.id})">
+      ${n.name}
+    </div>
+  `).join('');
+}
+
+function selectName(id) {
+  selectedName = NAMES.find(n => n.id === id);
+  renderNames();
+  const b = document.getElementById('selectedBadge');
+  b.textContent = selectedName.name;
+  b.classList.add('active');
+  updateSubmitBtn();
+}
+
+// ---- TEMP INPUT (no fever indicator on main screen) ----
+document.getElementById('tempInput').addEventListener('input', updateSubmitBtn);
+
+function updateSubmitBtn() {
+  const v = parseFloat(document.getElementById('tempInput').value);
+  document.getElementById('submitBtn').disabled = !selectedName || isNaN(v) || v < 34 || v > 42;
+}
+updateSubmitBtn();
+
+// ---- RECORD ----
+function recordData() {
+  const v = parseFloat(document.getElementById('tempInput').value);
+  if (!selectedName || isNaN(v)) return;
+  const now = new Date();
+  const displayTime = now.toLocaleString('ja-JP', {
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+  records.unshift({
+    id: Date.now(),
+    nameId: selectedName.id,
+    name: selectedName.name,
+    temp: v,
+    timestamp: now.toISOString(),
+    displayTime,
+    departTime: ''
+  });
+  saveRecords();
+  showToast(`${selectedName.name}　${v.toFixed(1)}°C　記録しました`);
+  document.getElementById('tempInput').value = '36.0';
+  updateSubmitBtn();
+}
+
+// ---- MODALS ----
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el =>
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); })
+);
+
+// ---- AUTH ----
+function openAdminAuth() {
+  document.getElementById('authInput').value = '';
+  document.getElementById('authError').textContent = '';
+  document.getElementById('authModal').classList.add('open');
+  setTimeout(() => document.getElementById('authInput').focus(), 300);
+}
+
+function verifyAuth() {
+  if (document.getElementById('authInput').value === adminPw) {
+    closeModal('authModal');
+    openAdminPanel();
+  } else {
+    document.getElementById('authError').textContent = 'パスワードが違います';
+    document.getElementById('authInput').value = '';
+  }
+}
+
+// ---- ADMIN ----
+function openAdminPanel() {
+  switchTab('records');
+  document.getElementById('adminModal').classList.add('open');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', ['records','depart','settings'][i] === tab)
+  );
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'records')  { renderStats(); renderRecordsTable(); }
+  if (tab === 'depart')   renderDepartGrid();
+  if (tab === 'settings') renderCsvColSettings();
+}
+
+// ---- STATS ----
+function renderStats() {
+  const fever     = records.filter(r => r.temp >= THRESHOLDS.FEVER && r.temp < THRESHOLDS.HIGH_FEVER).length;
+  const highFever = records.filter(r => r.temp >= THRESHOLDS.HIGH_FEVER).length;
+  const avg       = records.length ? (records.reduce((s,r) => s+r.temp, 0) / records.length).toFixed(1) : '--';
+  const today     = new Date().toLocaleDateString('ja-JP');
+  const todayCnt  = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === today).length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-val">${records.length}</div>
+      <div class="stat-label">総記録数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="${fever > 0 ? 'color:var(--danger)' : ''}">${fever}</div>
+      <div class="stat-label">発熱件数<br><span style="font-size:10px;color:var(--text-light)">${THRESHOLDS.FEVER}°C 以上</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="${highFever > 0 ? 'color:#7c2d12' : ''}">${highFever}</div>
+      <div class="stat-label">高熱件数<br><span style="font-size:10px;color:var(--text-light)">${THRESHOLDS.HIGH_FEVER}°C 以上</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">${avg}</div>
+      <div class="stat-label">平均体温</div>
+    </div>
+  `;
+}
+
+// ---- RECORDS TABLE ----
+function renderRecordsTable() {
+  // Build visible columns from csvCols order
+  const visibleCols = csvCols.filter(c => c.enabled);
+
+  // Build header
+  const headCols = [
+    { key: 'name',        label: '氏名'     },
+    { key: 'temp',        label: '体温'     },
+    { key: 'status',      label: '状態'     },
+    { key: 'displayTime', label: '記録日時' },
+    { key: 'departTime',  label: '帰宅時刻' },
+  ].filter(h => visibleCols.find(c => c.key === h.key));
+
+  document.getElementById('recordsTableHead').innerHTML =
+    [...headCols.map(h => `<th>${h.label}</th>`), '<th style="width:110px"></th>'].join('');
+
+  const q        = (document.getElementById('recordSearch')?.value || '').trim();
+  const filtered = records.filter(r => !q || r.name.includes(q) || String(r.temp).includes(q));
+  const tbody    = document.getElementById('recordsTbody');
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="${headCols.length + 1}" style="text-align:center;color:var(--text-muted);padding:28px">記録がありません</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const status = getStatus(r.temp);
+    const cells  = headCols.map(h => {
+      if (h.key === 'temp')
+        return `<td class="temp-cell ${getTempCellClass(r.temp)}">${r.temp.toFixed(1)}°C</td>`;
+      if (h.key === 'status')
+        return `<td><span class="badge ${getStatusBadgeClass(r.temp)}">${status}</span></td>`;
+      if (h.key === 'displayTime')
+        return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${r.displayTime}</td>`;
+      if (h.key === 'departTime')
+        return `<td>${r.departTime ? `<span class="badge badge-home">${r.departTime} 帰宅</span>` : '<span style="color:var(--text-light);font-size:12px">—</span>'}</td>`;
+      return `<td style="font-weight:500">${r[h.key] || ''}</td>`;
+    }).join('');
+
+    return `<tr>${cells}
+      <td><div style="display:flex;gap:5px">
+        <button class="icon-btn" onclick="openEditModal(${r.id})">編集</button>
+        <button class="icon-btn del" onclick="deleteRecord(${r.id})">削除</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- EDIT ----
+function openEditModal(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('editId').value     = id;
+  document.getElementById('editTemp').value   = r.temp;
+  document.getElementById('editTime').value   = r.displayTime;
+  document.getElementById('editDepart').value = r.departTime || '';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function saveEdit() {
+  const id  = parseInt(document.getElementById('editId').value);
+  const idx = records.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const nt = parseFloat(document.getElementById('editTemp').value);
+  if (isNaN(nt) || nt < 34 || nt > 42) { showToast('体温の値が不正です', '#dc2626'); return; }
+  records[idx].temp        = nt;
+  records[idx].displayTime = document.getElementById('editTime').value;
+  records[idx].departTime  = document.getElementById('editDepart').value.trim();
+  saveRecords();
+  closeModal('editModal');
+  renderRecordsTable();
+  renderStats();
+  showToast('記録を更新しました');
+}
+
+function deleteRecord(id) {
+  if (!confirm('この記録を削除しますか？')) return;
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  renderRecordsTable();
+  renderStats();
+  showToast('削除しました', '#dc2626');
+}
+
+// ---- CLEAR ALL ----
+function clearAllData() {
+  if (!confirm('全ての記録を削除します。この操作は元に戻せません。')) return;
+  records = [];
+  saveRecords();
+  renderRecordsTable();
+  renderStats();
+  showToast('全データを削除しました', '#dc2626');
+}
+
+// ---- DEPARTURE ----
+function renderDepartGrid() {
+  document.getElementById('departGrid').innerHTML = NAMES.map(n => {
+    const done = departures[n.id];
+    return `
+      <div class="depart-card ${done ? 'done' : ''}" onclick="${done ? '' : 'recordDepart(' + n.id + ')'}">
+        <div>
+          <div class="depart-name-t">${n.name}</div>
+          ${done
+            ? `<div class="depart-time-t">${done} 帰宅</div>`
+            : `<div class="depart-hint">タップで帰宅記録</div>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function recordDepart(nameId) {
+  const now = new Date();
+  const t   = now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+  departures[nameId] = t;
+  saveDepartures();
+  const today = now.toLocaleDateString('ja-JP');
+  const rec   = records.find(r => r.nameId === nameId && new Date(r.timestamp).toLocaleDateString('ja-JP') === today);
+  if (rec) { rec.departTime = t; saveRecords(); }
+  const nm = NAMES.find(n => n.id === nameId)?.name || '';
+  showToast(`${nm}　${t} 帰宅記録`, '#d97706');
+  renderDepartGrid();
+}
+
+function resetDepartures() {
+  // 帰宅辞書をクリア
+  departures = {};
+  saveDepartures();
+
+  // 本日のレコードの departTime もクリア
+  const today = new Date().toLocaleDateString('ja-JP');
+  let changed = false;
+  records.forEach(r => {
+    if (new Date(r.timestamp).toLocaleDateString('ja-JP') === today && r.departTime) {
+      r.departTime = '';
+      changed = true;
+    }
+  });
+  if (changed) saveRecords();
+
+  renderDepartGrid();
+  showToast('帰宅記録をリセットしました');
+}
+
+// ---- CSV COLUMNS SETTINGS ----
+let dragSrc = null;
+
+function renderCsvColSettings() {
+  const list = document.getElementById('csvColList');
+  list.innerHTML = csvCols.map((col, idx) => `
+    <div class="csv-col-item" draggable="true"
+      data-idx="${idx}"
+      ondragstart="onDragStart(event,${idx})"
+      ondragover="onDragOver(event,${idx})"
+      ondragleave="onDragLeave(event)"
+      ondrop="onDrop(event,${idx})"
+      ondragend="onDragEnd(event)">
+      <span class="csv-drag-handle">&#8597;</span>
+      <input type="checkbox" ${col.enabled ? 'checked' : ''}
+        onchange="toggleCsvCol(${idx}, this.checked)">
+      <span class="csv-col-label">${col.label}</span>
+      <span class="csv-col-key">${col.key}</span>
+    </div>
+  `).join('');
+}
+
+function toggleCsvCol(idx, checked) {
+  csvCols[idx].enabled = checked;
+  saveCsvCols();
+}
+
+function onDragStart(e, idx) {
+  dragSrc = idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragOver(e, idx) {
+  e.preventDefault();
+  if (dragSrc === idx) return;
+  document.querySelectorAll('.csv-col-item').forEach(el => el.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function onDrop(e, idx) {
+  e.preventDefault();
+  if (dragSrc === null || dragSrc === idx) return;
+  const moved = csvCols.splice(dragSrc, 1)[0];
+  csvCols.splice(idx, 0, moved);
+  saveCsvCols();
+  renderCsvColSettings();
+}
+
+function onDragEnd(e) {
+  dragSrc = null;
+  document.querySelectorAll('.csv-col-item').forEach(el => {
+    el.classList.remove('dragging');
+    el.classList.remove('drag-over');
+  });
+}
+
+function resetCsvCols() {
+  csvCols = JSON.parse(JSON.stringify(CSV_COLS_DEFAULT));
+  saveCsvCols();
+  renderCsvColSettings();
+  showToast('CSV列設定をリセットしました');
+}
+
+// ---- CSV EXPORT ----
+function exportCSV() {
+  if (!records.length) { showToast('記録がありません', '#dc2626'); return; }
+
+  const enabledCols = csvCols.filter(c => c.enabled);
+  const header      = enabledCols.map(c => c.label);
+
+  const rows = records.map(r => enabledCols.map(c => {
+    if (c.key === 'temp')   return r.temp.toFixed(1);
+    if (c.key === 'status') return getStatus(r.temp);
+    return r[c.key] || '';
+  }));
+
+  const csv = '\uFEFF' + [header, ...rows]
+    .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const a = Object.assign(document.createElement('a'), {
+    href:     URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })),
+    download: `体温記録_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '-')}.csv`
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('CSVを出力しました');
+}
+
+// ---- PASSWORD ----
+function changePassword() {
+  const v = document.getElementById('newPwInput').value.trim();
+  if (v.length < 6) { showToast('6文字以上で入力してください', '#dc2626'); return; }
+  adminPw = v;
+  localStorage.setItem('hcPw', adminPw);
+  document.getElementById('newPwInput').value = '';
+  showToast('パスワードを変更しました');
+}
+
+// ---- TOAST ----
+function showToast(msg, color = '#2563eb') {
+  const t = document.getElementById('toast');
+  t.textContent     = msg;
+  t.style.color     = color;
+  t.style.borderColor = color + '55';
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ---- INIT ----
+renderNames();
+</script>
+</body>
+</html>
