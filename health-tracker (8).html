@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>体温記録</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: linear-gradient(145deg,#ffffff 0%,#e8f0fb 50%,#daeaf8 100%);
+    --surface2: rgba(240,246,255,0.9);
+    --border: #d0dce8;
+    --border-light: #e4edf5;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+    --danger-light: rgba(220,38,38,0.08);
+    --warn: #d97706;
+    --warn-light: rgba(217,119,6,0.10);
+    --success: #059669;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --selected-bg: rgba(37,99,235,0.07);
+    --selected-border: #2563eb;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08),0 4px 16px rgba(37,99,235,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    /* iPad Safe Area */
+    --safe-top:    env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left:   env(safe-area-inset-left, 0px);
+    --safe-right:  env(safe-area-inset-right, 0px);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+  html{
+    height:100%;
+    /* Android Chrome address bar fix */
+    height:-webkit-fill-available;
+  }
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans JP',sans-serif;
+    height:100vh;
+    height:-webkit-fill-available; /* Android Chrome */
+    height:100dvh;                 /* modern browsers */
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    /* prevent overscroll bounce on iOS/Android */
+    overscroll-behavior:none;
+    touch-action:manipulation;
+  }
+
+  /* ===== LOCK SCREEN ===== */
+  #lockScreen{
+    position:fixed;inset:0;
+    background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 60%,#0e2340 100%);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    z-index:1000;
+    transition:opacity 0.4s;
+    padding-top:var(--safe-top);
+    padding-bottom:var(--safe-bottom);
+    padding-left:var(--safe-left);
+    padding-right:var(--safe-right);
+  }
+  #lockScreen.hidden{opacity:0;pointer-events:none;}
+
+  .lock-app-name{
+    font-family:'DM Mono',monospace;
+    font-size:12px;
+    font-weight:400;
+    letter-spacing:0.2em;
+    color:rgba(255,255,255,0.3);
+    text-transform:uppercase;
+    margin-bottom:40px;
+  }
+
+  .lock-title{
+    font-size:24px;
+    font-weight:600;
+    color:#fff;
+    margin-bottom:8px;
+    letter-spacing:0.03em;
+  }
+
+  .lock-sub{
+    font-size:14px;
+    color:rgba(255,255,255,0.45);
+    margin-bottom:36px;
+  }
+
+  .lock-form{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    width:300px;
+  }
+
+  .lock-label{
+    width:100%;
+    font-size:12px;
+    color:rgba(255,255,255,0.45);
+    letter-spacing:0.08em;
+    margin-bottom:-8px;
+  }
+
+  .lock-input{
+    width:100%;
+    background:rgba(255,255,255,0.09);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:14px;
+    padding:18px 22px;
+    color:#fff;
+    font-size:24px;
+    font-family:'DM Mono',monospace;
+    letter-spacing:0.22em;
+    text-align:center;
+    outline:none;
+    transition:border-color 0.2s,background 0.2s;
+    -webkit-appearance:none;
+    min-height:64px;
+  }
+
+  .lock-input::placeholder{color:rgba(255,255,255,0.2);}
+  .lock-input:focus{border-color:rgba(37,99,235,0.8);background:rgba(255,255,255,0.13);}
+  .lock-input.error{border-color:rgba(220,38,38,0.8);animation:shake 0.35s ease;}
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(5px)}
+  }
+
+  .lock-btn{
+    width:100%;
+    padding:17px;
+    background:#2563eb;
+    color:#fff;
+    border:none;
+    border-radius:14px;
+    font-size:17px;
+    font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+    letter-spacing:0.05em;
+    transition:background 0.2s,transform 0.15s;
+    -webkit-appearance:none;
+    min-height:56px;
+  }
+
+  .lock-btn:active{background:#1d4ed8;transform:scale(0.98);}
+
+  .lock-remember{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:rgba(255,255,255,0.5);
+    font-size:13px;
+    cursor:pointer;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+
+  .lock-remember input[type=checkbox]{
+    width:18px;height:18px;
+    accent-color:#2563eb;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  .lock-error{
+    font-size:13px;
+    color:rgba(239,68,68,0.95);
+    min-height:20px;
+    letter-spacing:0.02em;
+  }
+
+  /* ===== HEADER ===== */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding:0 28px;
+    padding-right:calc(28px + var(--safe-right));
+    padding-left:calc(28px + var(--safe-left));
+    padding-top:var(--safe-top);
+    height:calc(72px + var(--safe-top));
+    border-bottom:1px solid var(--border-light);
+    background:rgba(255,255,255,0.82);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    flex-shrink:0;
+  }
+
+  .big-clock{
+    font-family:'DM Mono',monospace;
+    font-size:42px;
+    font-weight:300;
+    letter-spacing:0.04em;
+    color:var(--text);
+    line-height:1;
+    text-align:right;
+  }
+
+  .big-date{
+    font-family:'DM Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+    letter-spacing:0.05em;
+    margin-top:3px;
+    text-align:right;
+  }
+
+  /* ===== MAIN ===== */
+  .main{
+    display:grid;
+    grid-template-columns:230px 1fr;
+    flex:1;
+    overflow:hidden;
+  }
+  .name-panel-wrap{
+    display:flex;
+    flex-direction:column;
+    border-right:1px solid var(--border-light);
+    background:rgba(255,255,255,0.52);
+    overflow:hidden;
+  }
+
+  .name-panel{
+    flex:1;
+    overflow-y:auto;
+    padding:14px 10px 8px;
+    padding-left:calc(10px + var(--safe-left));
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
+
+  .name-empty{
+    padding:32px 16px;
+    text-align:center;
+    color:var(--text-light);
+    font-size:14px;
+    line-height:2;
+  }
+
+  .name-item{
+    display:flex;
+    align-items:center;
+    padding:14px 16px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:all 0.14s;
+    font-size:15px;
+    font-weight:500;
+    color:var(--text);
+    min-height:52px;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+
+  .name-item:active{background:rgba(37,99,235,0.08);}
+
+  .name-item.selected{
+    background:var(--selected-bg);
+    border-color:var(--selected-border);
+    color:var(--accent);
+    font-weight:700;
+  }
+
+  /* ===== INPUT PANEL ===== */
+  .input-panel{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:32px;
+    padding:40px 20px;
+    padding-right:calc(20px + var(--safe-right));
+    padding-bottom:calc(40px + var(--safe-bottom));
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
+
+  .step-hint{
+    font-size:13px;
+    color:var(--text-muted);
+    letter-spacing:0.03em;
+    text-align:center;
+  }
+
+  .selected-badge{
+    background:rgba(255,255,255,0.85);
+    border:1px solid var(--border);
+    border-radius:100px;
+    padding:11px 30px;
+    font-size:17px;
+    color:var(--text-muted);
+    transition:all 0.3s;
+    min-width:240px;
+    text-align:center;
+    box-shadow:var(--shadow);
+  }
+
+  .selected-badge.active{
+    background:var(--selected-bg);
+    border-color:var(--accent);
+    color:var(--accent);
+    font-weight:700;
+  }
+
+  .temp-block{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+
+  .temp-label-text{
+    font-size:13px;
+    letter-spacing:0.1em;
+    color:var(--text-muted);
+    font-weight:600;
+  }
+
+  .temp-wrap{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(255,255,255,0.92);
+    border:2px solid var(--border);
+    border-radius:22px;
+    padding:14px 28px;
+    transition:border-color 0.2s,box-shadow 0.2s;
+    box-shadow:var(--shadow);
+  }
+
+  .temp-wrap:focus-within{
+    border-color:var(--accent);
+    box-shadow:0 0 0 4px rgba(37,99,235,0.1),var(--shadow);
+  }
+
+  .temp-input{
+    background:transparent;
+    border:none;
+    outline:none;
+    font-family:'DM Mono',monospace;
+    font-size:60px;
+    font-weight:400;
+    color:var(--text);
+    width:165px;
+    text-align:center;
+    letter-spacing:0.02em;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .temp-input::-webkit-inner-spin-button,
+  .temp-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+
+  .temp-unit{
+    font-family:'DM Mono',monospace;
+    font-size:26px;
+    color:var(--text-muted);
+    padding-top:8px;
+  }
+
+  .submit-btn{
+    padding:18px 70px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:100px;
+    font-size:18px;
+    font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+    letter-spacing:0.06em;
+    transition:background 0.2s,transform 0.15s,box-shadow 0.2s;
+    box-shadow:0 4px 20px rgba(37,99,235,0.3);
+    -webkit-appearance:none;
+    min-height:58px;
+    min-width:200px;
+  }
+
+  .submit-btn:active{background:var(--accent-hover);transform:scale(0.97);}
+
+  .submit-btn:disabled{
+    opacity:0.28;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+    background:#94a3b8;
+  }
+
+  .temp-scroll-hint{
+    font-size:11px;
+    color:var(--text-light);
+    letter-spacing:0.04em;
+    margin-top:-8px;
+  }
+
+  .submit-hint{
+    font-size:12px;
+    color:var(--text-light);
+    text-align:center;
+  }
+
+  /* ===== ADMIN BTN ===== */
+  .admin-btn{
+    position:fixed;
+    bottom:calc(24px + var(--safe-bottom));
+    right:calc(24px + var(--safe-right));
+    width:52px;height:52px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.92);
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    font-size:20px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.2s;
+    z-index:100;
+    box-shadow:var(--shadow);
+    -webkit-appearance:none;
+    font-family:'DM Mono',monospace;
+  }
+
+  /* hover only on pointer devices (mouse), not touch */
+  @media (hover:hover) and (pointer:fine){
+    .admin-btn:hover{border-color:var(--accent);color:var(--accent);transform:rotate(18deg);}
+    .name-item:hover{background:rgba(37,99,235,0.05);border-color:var(--border);}
+    .depart-card:hover:not(.done):not(.locked){background:var(--surface2);}
+    .icon-btn:hover{background:var(--surface2);color:var(--text);}
+    .icon-btn.del:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger);}
+    .btn-primary:hover{background:var(--accent-hover);}
+    .btn-secondary:hover{color:var(--text);background:var(--surface2);}
+    .tab-btn:hover:not(.active){background:rgba(255,255,255,0.6);color:var(--text);}
+    .small-btn.btn-csv:hover{background:rgba(37,99,235,0.14);}
+    .small-btn.btn-del:hover{background:rgba(220,38,38,0.15);}
+    .small-btn.btn-add:hover{background:rgba(5,150,105,0.15);}
+    .small-btn.btn-warn:hover{background:rgba(217,119,6,0.18);}
+    .member-row:hover{background:rgba(37,99,235,0.03);}
+    .lock-btn:hover{background:#1d4ed8;}
+    .submit-btn:hover:not(:disabled){background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,99,235,0.38);}
+  }
+
+  .admin-btn:active{border-color:var(--accent);color:var(--accent);}
+
+  /* ===== MODAL BASE ===== */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(15,25,50,0.38);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;
+    z-index:200;
+    opacity:0;pointer-events:none;
+    transition:opacity 0.22s;
+    /* safe area padding so modal doesn't go under home bar */
+    padding:max(16px, var(--safe-top)) max(16px, var(--safe-right)) max(16px, var(--safe-bottom)) max(16px, var(--safe-left));
+    /* allow scrolling on the overlay itself if needed */
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+
+  .modal{
+    background:rgba(255,255,255,0.98);
+    border:1px solid var(--border-light);
+    border-radius:18px;
+    padding:28px;
+    transform:translateY(16px) scale(0.97);
+    transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow:0 24px 80px rgba(0,0,0,0.18);
+    width:100%;
+    max-width:400px;
+  }
+
+  .modal-overlay.open .modal{transform:translateY(0) scale(1);}
+
+  .modal-h{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--text);}
+  .modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.7;}
+
+  .modal-input{
+    width:100%;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:14px 16px;
+    color:var(--text);
+    font-size:16px;
+    font-family:'DM Mono',monospace;
+    outline:none;
+    letter-spacing:0.08em;
+    margin-bottom:12px;
+    transition:border-color 0.2s;
+    -webkit-appearance:none;
+    min-height:52px;
+  }
+
+  .modal-input:focus{border-color:var(--accent);}
+  .modal-error{font-size:13px;color:var(--danger);min-height:20px;margin-bottom:10px;}
+  .modal-btns{display:flex;gap:10px;margin-top:4px;}
+
+  .btn-primary{
+    flex:1;padding:14px;
+    background:var(--accent);color:#fff;
+    border:none;border-radius:var(--radius-sm);
+    font-size:15px;font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+    transition:background 0.2s,transform 0.15s;
+    -webkit-appearance:none;min-height:50px;
+  }
+
+  .btn-primary:active{background:var(--accent-hover);transform:scale(0.97);}
+
+  .btn-secondary{
+    padding:14px 18px;
+    background:transparent;color:var(--text-muted);
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    font-size:15px;font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;transition:all 0.2s;
+    -webkit-appearance:none;min-height:50px;white-space:nowrap;
+  }
+
+  .btn-secondary:active{color:var(--text);background:var(--surface2);}
+
+  /* ===== ADMIN MODAL ===== */
+  .admin-modal{
+    max-width:min(96vw,880px);
+    max-height:90vh;
+    display:flex;flex-direction:column;
+  }
+
+  .admin-tabs{
+    display:flex;gap:3px;
+    margin-bottom:18px;
+    background:var(--surface2);
+    border-radius:var(--radius-sm);
+    padding:3px;
+    border:1px solid var(--border-light);
+    flex-shrink:0;
+  }
+
+  .tab-btn{
+    flex:1;padding:11px 6px;
+    border:none;border-radius:var(--radius-xs);
+    background:transparent;color:var(--text-muted);
+    font-size:13px;font-weight:600;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;transition:all 0.18s;
+    letter-spacing:0.02em;
+    min-height:44px;-webkit-appearance:none;
+  }
+
+  .tab-btn.active{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+
+  .tab-content{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+  .tab-content.active{display:block;}
+
+  /* STATS */
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;margin-bottom:14px;
+  }
+
+  .stat-card{
+    background:var(--surface2);border:1px solid var(--border-light);
+    border-radius:var(--radius-sm);padding:12px;text-align:center;
+  }
+
+  .stat-val{
+    font-family:'DM Mono',monospace;font-size:26px;font-weight:500;
+    color:var(--accent);line-height:1;
+  }
+
+  .stat-label{font-size:11px;color:var(--text-muted);margin-top:5px;line-height:1.4;}
+
+  /* TABLE */
+  .tbl-wrap{
+    overflow-x:auto;max-height:280px;overflow-y:auto;
+    border:1px solid var(--border-light);border-radius:var(--radius-sm);
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
+
+  .records-table{width:100%;border-collapse:collapse;font-size:13px;}
+
+  .records-table th{
+    text-align:left;font-size:11px;font-weight:600;
+    letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-muted);padding:9px 12px;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;background:#f5f8ff;z-index:1;white-space:nowrap;
+  }
+
+  .records-table td{
+    padding:10px 12px;border-bottom:1px solid var(--border-light);
+    vertical-align:middle;white-space:nowrap;
+  }
+
+  .records-table tbody tr:last-child td{border-bottom:none;}
+  .records-table tbody tr:active td{background:rgba(37,99,235,0.03);}
+
+  .temp-cell{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--accent);}
+  .temp-cell.fever{color:var(--danger);}
+  .temp-cell.high-fever{color:#7c2d12;}
+
+  .badge{
+    display:inline-flex;align-items:center;
+    padding:3px 9px;border-radius:5px;
+    font-size:11px;font-weight:600;letter-spacing:0.03em;
+  }
+
+  .badge-fever{background:var(--danger-light);color:var(--danger);}
+  .badge-high-fever{background:rgba(124,45,18,0.10);color:#7c2d12;}
+  .badge-ok{background:rgba(5,150,105,0.09);color:var(--success);}
+  .badge-home{background:var(--warn-light);color:var(--warn);}
+
+  .icon-btn{
+    background:transparent;border:1px solid var(--border-light);
+    cursor:pointer;font-size:12px;padding:6px 12px;
+    border-radius:var(--radius-xs);transition:all 0.15s;
+    color:var(--text-muted);font-family:'Noto Sans JP',sans-serif;
+    font-weight:600;min-height:36px;-webkit-appearance:none;
+  }
+
+  .icon-btn:active{background:var(--surface2);color:var(--text);}
+  .icon-btn.del:active{background:var(--danger-light);color:var(--danger);border-color:var(--danger);}
+
+  .action-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:12px;gap:10px;flex-wrap:wrap;
+  }
+
+  .search-input{
+    background:#fff;border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:10px 14px;
+    color:var(--text);font-size:14px;
+    font-family:'Noto Sans JP',sans-serif;
+    outline:none;flex:1;min-width:120px;max-width:220px;
+    transition:border-color 0.2s;-webkit-appearance:none;min-height:44px;
+  }
+
+  .search-input:focus{border-color:var(--accent);}
+  .search-input::placeholder{color:var(--text-light);}
+
+  .small-btn{
+    padding:10px 14px;border-radius:var(--radius-sm);
+    font-size:13px;font-weight:600;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;border:1px solid;
+    transition:all 0.15s;-webkit-appearance:none;
+    min-height:44px;white-space:nowrap;
+  }
+
+  .btn-csv{background:rgba(37,99,235,0.07);border-color:rgba(37,99,235,0.22);color:var(--accent);}
+  .btn-csv:active{background:rgba(37,99,235,0.14);}
+  .btn-del{background:var(--danger-light);border-color:rgba(220,38,38,0.25);color:var(--danger);}
+  .btn-del:active{background:rgba(220,38,38,0.15);}
+  .btn-add{background:rgba(5,150,105,0.08);border-color:rgba(5,150,105,0.25);color:var(--success);}
+  .btn-add:active{background:rgba(5,150,105,0.15);}
+  .btn-warn{background:var(--warn-light);border-color:rgba(217,119,6,0.3);color:var(--warn);}
+  .btn-warn:active{background:rgba(217,119,6,0.18);}
+
+  /* DEPARTURE */
+  .depart-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+    max-height:340px;overflow-y:auto;margin-bottom:14px;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
+
+  .depart-card{
+    display:flex;flex-direction:column;
+    padding:15px 16px;
+    background:#fff;border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:background 0.15s;
+    min-height:72px;
+    -webkit-user-select:none;user-select:none;
+  }
+
+  .depart-card:active{background:var(--surface2);}
+  .depart-card.done{opacity:0.45;cursor:default;pointer-events:none;}
+  .depart-card.locked{
+    opacity:0.5;cursor:not-allowed;
+    background:var(--surface2);
+    border-style:dashed;
+  }
+
+  .depart-name-t{font-size:15px;font-weight:600;color:var(--text);}
+  .depart-time-t{font-family:'DM Mono',monospace;font-size:12px;color:var(--warn);margin-top:5px;font-weight:500;}
+  .depart-hint{font-size:12px;color:var(--text-light);margin-top:5px;}
+  .depart-locked-msg{font-size:12px;color:var(--danger);margin-top:5px;opacity:0.8;}
+
+  /* Snack cards — two-button variant */
+  .snack-card{
+    display:flex;
+    flex-direction:column;
+    padding:14px 14px 10px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    min-height:90px;
+    gap:10px;
+  }
+
+  .snack-card.locked{
+    opacity:0.45;
+    background:var(--surface2);
+    border-style:dashed;
+  }
+
+  .snack-card.ate{
+    border-color:#16a34a;
+    background:rgba(22,163,74,0.05);
+  }
+
+  .snack-card.skipped{
+    border-color:#dc2626;
+    background:rgba(220,38,38,0.04);
+  }
+
+  .snack-name{font-size:14px;font-weight:600;color:var(--text);}
+  .snack-status{font-size:12px;margin-top:2px;}
+  .snack-status.ate-txt{color:#16a34a;font-weight:600;}
+  .snack-status.skip-txt{color:#dc2626;font-weight:600;}
+  .snack-status.hint-txt{color:var(--text-light);}
+  .snack-status.locked-txt{color:var(--danger);opacity:0.8;}
+
+  .snack-btns{
+    display:flex;gap:6px;
+  }
+
+  .snack-btn{
+    flex:1;
+    padding:7px 4px;
+    border-radius:var(--radius-xs);
+    font-size:12px;
+    font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+    border:1px solid;
+    transition:all 0.15s;
+    -webkit-appearance:none;
+    min-height:36px;
+  }
+
+  .snack-btn-yes{
+    background:rgba(22,163,74,0.08);
+    border-color:rgba(22,163,74,0.3);
+    color:#16a34a;
+  }
+
+  .snack-btn-yes.chosen{
+    background:#16a34a;
+    border-color:#16a34a;
+    color:#fff;
+  }
+
+  .snack-btn-no{
+    background:rgba(220,38,38,0.06);
+    border-color:rgba(220,38,38,0.25);
+    color:#dc2626;
+  }
+
+  .snack-btn-no.chosen{
+    background:#dc2626;
+    border-color:#dc2626;
+    color:#fff;
+  }
+
+  @media (hover:hover) and (pointer:fine){
+    .snack-btn-yes:hover:not(.chosen){background:rgba(22,163,74,0.15);}
+    .snack-btn-no:hover:not(.chosen){background:rgba(220,38,38,0.12);}
+  }
+
+  /* MEMBER LIST */
+  .member-list{
+    display:flex;flex-direction:column;gap:6px;
+    max-height:360px;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
+
+  .member-row{
+    display:flex;align-items:center;gap:10px;
+    padding:14px 16px;
+    background:#fff;border:1px solid var(--border-light);
+    border-radius:var(--radius-sm);
+  }
+
+  .member-name{flex:1;font-size:15px;font-weight:500;color:var(--text);}
+
+  /* SETTINGS */
+  .settings-row{
+    display:flex;align-items:flex-start;
+    justify-content:space-between;
+    padding:18px 0;border-bottom:1px solid var(--border-light);gap:14px;
+  }
+
+  .settings-row:last-child{border-bottom:none;}
+  .settings-row-label{font-size:15px;font-weight:600;color:var(--text);}
+  .settings-row-sub{font-size:13px;color:var(--text-muted);margin-top:4px;line-height:1.6;}
+
+  .pw-row{display:flex;gap:8px;flex-shrink:0;align-items:flex-start;}
+
+  .pw-input{
+    background:#fff;border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:10px 14px;
+    color:var(--text);font-size:14px;
+    font-family:'DM Mono',monospace;
+    outline:none;width:180px;letter-spacing:0.08em;
+    transition:border-color 0.2s;-webkit-appearance:none;min-height:44px;
+  }
+
+  .pw-input:focus{border-color:var(--accent);}
+
+  /* CSV cols */
+  .csv-col-list{
+    display:flex;flex-direction:column;gap:4px;
+    background:var(--surface2);border:1px solid var(--border-light);
+    border-radius:var(--radius-sm);padding:8px;margin-top:10px;width:100%;
+  }
+
+  .csv-col-item{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 10px;border-radius:var(--radius-xs);
+    font-size:13px;color:var(--text);
+    background:#fff;border:1px solid var(--border-light);
+    cursor:grab;user-select:none;
+    transition:background 0.12s;min-height:46px;
+  }
+
+  .csv-col-item.dragging{opacity:0.4;}
+  .csv-col-item.drag-over{border-color:var(--accent);background:var(--selected-bg);}
+  .csv-col-item input[type="checkbox"]{accent-color:var(--accent);width:18px;height:18px;cursor:pointer;flex-shrink:0;}
+  .csv-drag-handle{color:var(--text-light);font-size:18px;cursor:grab;flex-shrink:0;padding:0 2px;}
+  .csv-col-label{flex:1;font-weight:500;}
+  .csv-col-key{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-light);}
+
+  /* EDIT MODAL */
+  .edit-field{margin-bottom:14px;}
+  .edit-field label{
+    font-size:12px;color:var(--text-muted);
+    letter-spacing:0.06em;text-transform:uppercase;
+    display:block;margin-bottom:6px;font-weight:600;
+  }
+
+  .edit-field input{
+    width:100%;background:var(--surface2);
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:12px 14px;color:var(--text);font-size:15px;
+    font-family:'DM Mono',monospace;outline:none;
+    transition:border-color 0.2s;-webkit-appearance:none;min-height:48px;
+  }
+
+  .edit-field input:focus{border-color:var(--accent);}
+
+  /* ===== INLINE CLOCK ===== */
+  .inline-clock-wrap{
+    text-align:center;
+    padding:10px 0 4px;
+  }
+
+  /* Visibility checklist in settings */
+  .visibility-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+    margin-top:10px;
+  }
+
+  .vis-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    background:#fff;
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:all 0.15s;
+    -webkit-user-select:none;
+    user-select:none;
+    min-height:46px;
+  }
+
+  .vis-item.visible{
+    background:var(--selected-bg);
+    border-color:var(--selected-border);
+  }
+
+  @media (hover:hover) and (pointer:fine){
+    .vis-item:hover{border-color:var(--accent);}
+  }
+
+  .vis-check{
+    width:20px;height:20px;
+    border-radius:5px;
+    border:2px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    transition:all 0.15s;
+    background:#fff;
+    font-size:13px;
+    font-weight:700;
+    color:transparent;
+  }
+
+  .vis-item.visible .vis-check{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+
+  .vis-name{
+    flex:1;
+    font-size:13px;
+    font-weight:500;
+    color:var(--text);
+    line-height:1.3;
+  }
+
+  .vis-furi{
+    font-size:11px;
+    color:var(--text-muted);
+    display:block;
+    margin-top:1px;
+    font-weight:400;
+  }
+
+  .vis-all-row{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+  /* TOAST */
+  .toast{
+    position:fixed;top:20px;left:50%;
+    transform:translateX(-50%) translateY(-80px);
+    background:rgba(255,255,255,0.98);
+    border:1px solid var(--border);
+    border-radius:100px;padding:12px 28px;
+    font-size:14px;font-weight:600;
+    z-index:500;
+    transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    white-space:nowrap;pointer-events:none;
+    box-shadow:var(--shadow-lg);color:var(--accent);
+    max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+  }
+
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* ===== RESPONSIVE BREAKPOINTS ===== */
+
+  /* iPad Pro 12.9" landscape / large tablet */
+  @media (min-width:1024px){
+    .main{grid-template-columns:260px 1fr;}
+    .admin-modal{max-width:860px;}
+    .big-clock{font-size:46px;}
+    .stats-grid{grid-template-columns:repeat(4,1fr);}
+  }
+
+  /* iPad 10" / iPad Air landscape */
+  @media (min-width:768px) and (max-width:1023px) and (orientation:landscape){
+    .main{grid-template-columns:220px 1fr;}
+    .admin-modal{max-width:min(94vw,780px);}
+    .stats-grid{grid-template-columns:repeat(4,1fr);}
+    .big-clock{font-size:38px;}
+  }
+
+  /* iPad portrait */
+  @media (min-width:768px) and (max-width:1023px) and (orientation:portrait){
+    .main{grid-template-columns:200px 1fr;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .big-clock{font-size:36px;}
+    .admin-modal{max-width:min(92vw,680px);}
+    .depart-grid{grid-template-columns:1fr 1fr;}
+  }
+
+  /* Small tablet / large phone landscape */
+  @media (min-width:600px) and (max-width:767px){
+    .main{grid-template-columns:190px 1fr;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .big-clock{font-size:32px;}
+    .depart-grid{grid-template-columns:1fr 1fr;}
+  }
+
+  /* Phone portrait */
+  @media (max-width:599px){
+    .main{grid-template-columns:160px 1fr;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .depart-grid{grid-template-columns:1fr;}
+    .big-clock{font-size:28px;}
+    .big-date{font-size:11px;}
+    .temp-input{font-size:48px;width:140px;}
+    .submit-btn{padding:16px 40px;font-size:16px;}
+    .admin-modal{max-width:100%;border-radius:14px;}
+    .admin-tabs .tab-btn{font-size:12px;padding:9px 4px;}
+  }
+
+  /* Windows / Mac — wider scrollbars for mouse users */
+  @media (hover:hover) and (pointer:fine){
+    ::-webkit-scrollbar{width:6px;}
+    ::-webkit-scrollbar-thumb{background:var(--border);}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOCK SCREEN ===== -->
+<div id="lockScreen">
+  <div class="lock-app-name">Health Check System</div>
+  <div class="lock-title">ログイン</div>
+  <div class="lock-sub">パスワードを入力してください</div>
+  <div class="lock-form">
+    <div class="lock-label">パスワード</div>
+    <input class="lock-input" type="password" id="lockInput"
+      placeholder="- - - - - -"
+      onkeydown="if(event.key==='Enter')tryUnlock()"
+      autocomplete="off">
+    <div class="lock-error" id="lockError"></div>
+    <label class="lock-remember">
+      <input type="checkbox" id="lockRemember" checked>
+      次回からパスワード入力を省略する
+    </label>
+    <button class="lock-btn" onclick="tryUnlock()">ログイン</button>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<header style="height:var(--safe-top);min-height:0;padding:0;border:none;background:transparent;"></header>
+
+<div class="main">
+  <div class="name-panel-wrap">
+    <div class="name-panel" id="namePanel"></div>
+  </div>
+
+  <div class="input-panel">
+    <div class="inline-clock-wrap">
+      <div class="big-clock" id="bigClock">--:--:--</div>
+      <div class="big-date"  id="bigDate"></div>
+    </div>
+
+    <div class="step-hint">1. 左の一覧からお名前を選んでください</div>
+
+    <div class="selected-badge" id="selectedBadge">名前が選択されていません</div>
+
+    <div class="step-hint">2. 体温を入力してください</div>
+
+    <div class="temp-block">
+      <div class="temp-label-text">体　温</div>
+      <div class="temp-wrap" id="tempWrap">
+        <input class="temp-input" type="number" id="tempInput"
+          value="36.0" step="0.1" min="34.0" max="42.0"
+          inputmode="decimal"
+          pattern="[0-9]*\.?[0-9]*"
+          autocomplete="off">
+        <div class="temp-unit">°C</div>
+      </div>
+      <div class="temp-scroll-hint">上下にスワイプ（またはスクロール）で体温を変更できます</div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="recordData()" disabled>
+      記録する
+    </button>
+    <div class="submit-hint" id="submitHint">名前と体温を確認してからボタンを押してください</div>
+  </div>
+</div>
+
+<button class="admin-btn" onclick="openAdminAuth()" title="管理画面">&#9881;</button>
+<div class="toast" id="toast"></div>
+
+<!-- ===== AUTH MODAL ===== -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <div class="modal-h">管理者ログイン</div>
+    <div class="modal-sub">管理者パスワードを入力してください</div>
+    <input class="modal-input" type="password" id="authInput" placeholder="パスワード"
+      onkeydown="if(event.key==='Enter')verifyAuth()" autocomplete="off">
+    <div class="modal-error" id="authError"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('authModal')">キャンセル</button>
+      <button class="btn-primary" onclick="verifyAuth()">ログイン</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN MODAL ===== -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal admin-modal">
+    <div class="modal-h">管理パネル</div>
+    <div class="modal-sub" style="margin-bottom:14px">記録の確認・帰宅管理・メンバー・設定</div>
+
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('records')">記録履歴</button>
+      <button class="tab-btn" onclick="switchTab('depart')">帰宅記録</button>
+      <button class="tab-btn" onclick="switchTab('snack')">おやつ記録</button>
+      <button class="tab-btn" onclick="switchTab('members')">メンバー</button>
+      <button class="tab-btn" onclick="switchTab('settings')">設定</button>
+    </div>
+
+    <!-- RECORDS -->
+    <div class="tab-content active" id="tab-records">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="action-bar">
+        <input class="search-input" type="text" placeholder="名前や体温で検索..."
+          id="recordSearch" oninput="renderRecordsTable()">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="small-btn btn-csv" onclick="exportCSV()">CSV出力</button>
+          <button class="small-btn btn-del" onclick="clearAllData()">全削除</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="records-table">
+          <thead><tr id="recordsTableHead"></tr></thead>
+          <tbody id="recordsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DEPARTURE -->
+    <div class="tab-content" id="tab-depart">
+      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px">
+        本日の体温が記録されている方のみ帰宅時刻を記録できます
+      </div>
+      <div class="depart-grid" id="departGrid"></div>
+      <button class="btn-secondary" style="width:100%;font-size:14px"
+        onclick="resetDepartures()">本日の帰宅記録をリセット</button>
+    </div>
+
+    <!-- SNACK -->
+    <div class="tab-content" id="tab-snack">
+      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px">
+        タップでおやつの有無を記録します。本日の体温が記録されている方のみ記録できます
+      </div>
+      <div class="depart-grid" id="snackGrid"></div>
+      <button class="btn-secondary" style="width:100%;font-size:14px;margin-top:4px"
+        onclick="resetSnacks()">本日のおやつ記録をリセット</button>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="tab-content" id="tab-members">
+      <div class="action-bar" style="margin-bottom:14px">
+        <span style="font-size:14px;color:var(--text-muted)">登録済みメンバー一覧</span>
+        <button class="small-btn btn-add" onclick="openAddMember()">追加する</button>
+      </div>
+      <div class="member-list" id="memberList"></div>
+      <div id="memberEmpty" style="display:none;padding:36px;text-align:center;color:var(--text-light);font-size:14px;line-height:2;">
+        まだメンバーが登録されていません<br>「追加する」ボタンからメンバーを登録してください
+      </div>
+
+      <!-- visibility section inside members tab -->
+      <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border-light)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div class="settings-row-label">体温入力画面に表示するメンバー</div>
+            <div class="settings-row-sub" style="margin-top:2px">チェックを外すと入力画面に表示されません</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="small-btn btn-add" style="font-size:12px" onclick="setAllVisibility(true)">全員表示</button>
+            <button class="small-btn" style="font-size:12px;border:1px solid var(--border);color:var(--text-muted);background:transparent;" onclick="setAllVisibility(false)">全員非表示</button>
+          </div>
+        </div>
+        <div class="visibility-grid" id="visibilityGrid"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="tab-content" id="tab-settings">
+
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">ログインパスワード</div>
+          <div class="settings-row-sub">
+            アプリを開いたときに入力するパスワードです
+          </div>
+        </div>
+        <div class="pw-row">
+          <input class="pw-input" type="password" id="newLockPwInput"
+            placeholder="新しいパスワード" autocomplete="off">
+          <button class="btn-primary" style="flex:0 0 auto;padding:10px 14px;font-size:14px"
+            onclick="changeLockPassword()">変更</button>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">管理者パスワード</div>
+          <div class="settings-row-sub">
+            この管理パネルを開くためのパスワードです
+          </div>
+        </div>
+        <div class="pw-row">
+          <input class="pw-input" type="password" id="newAdminPwInput"
+            placeholder="新しいパスワード" autocomplete="off">
+          <button class="btn-primary" style="flex:0 0 auto;padding:10px 14px;font-size:14px"
+            onclick="changeAdminPassword()">変更</button>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">パスワード省略の解除</div>
+          <div class="settings-row-sub">
+            「次回から省略する」を無効にして、<br>次回から再びパスワード入力を求めます
+          </div>
+        </div>
+        <button class="small-btn btn-warn" onclick="clearPersistentLogin()"
+          style="flex-shrink:0;align-self:center">省略を解除</button>
+      </div>
+
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start">
+        <div style="width:100%;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="settings-row-label">CSV出力の列設定</div>
+            <div class="settings-row-sub">チェックで出力する列を選択、ドラッグで並び替え</div>
+          </div>
+          <button class="small-btn btn-csv" onclick="resetCsvCols()">初期化</button>
+        </div>
+        <div class="csv-col-list" id="csvColList"></div>
+      </div>
+
+
+
+    </div>
+
+    <div style="margin-top:18px;border-top:1px solid var(--border-light);padding-top:16px;flex-shrink:0">
+      <button class="btn-secondary" style="width:100%;font-size:15px" onclick="closeModal('adminModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MEMBER MODAL -->
+<div class="modal-overlay" id="memberModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-h" id="memberModalTitle">メンバーを追加</div>
+    <div class="modal-sub">名前を入力して「保存」を押してください</div>
+    <input type="hidden" id="memberEditId">
+    <div class="edit-field">
+      <label>氏名（漢字）</label>
+      <input class="modal-input" style="margin-bottom:0" type="text" id="memberNameInput"
+        placeholder="例: 山田 太郎"
+        onkeydown="if(event.key==='Enter')document.getElementById('memberFuriInput').focus()"
+        autocomplete="off">
+    </div>
+    <div class="edit-field" style="margin-top:12px">
+      <label>ふりがな（任意）</label>
+      <input class="modal-input" style="margin-bottom:0;letter-spacing:0.04em;" type="text" id="memberFuriInput"
+        placeholder="例: やまだ たろう"
+        onkeydown="if(event.key==='Enter')saveMember()"
+        autocomplete="off">
+    </div>
+    <div class="modal-error" id="memberError" style="margin-top:10px"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('memberModal')">キャンセル</button>
+      <button class="btn-primary" onclick="saveMember()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT RECORD MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-h">記録を編集</div>
+    <div class="modal-sub">内容を修正して「保存」を押してください</div>
+    <input type="hidden" id="editId">
+    <div class="edit-field">
+      <label>体温（°C）</label>
+      <input type="number" id="editTemp" step="0.1" min="34" max="42" inputmode="decimal">
+    </div>
+    <div class="edit-field">
+      <label>記録した日時</label>
+      <input type="text" id="editTime">
+    </div>
+    <div class="edit-field">
+      <label>帰宅時刻（未記録の場合は空欄のまま）</label>
+      <input type="text" id="editDepart" placeholder="例: 17:30:00">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('editModal')">キャンセル</button>
+      <button class="btn-primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// 体温閾値設定 — 数値を変えて判断基準を調整できます
+// =====================================================
+const THRESHOLDS = {
+  FEVER:      37.5,  // 発熱とみなす体温 (°C)
+  HIGH_FEVER: 38.5,  // 高熱とみなす体温 (°C)
+};
+
+// CSV列の定義
+const CSV_COLS_DEFAULT = [
+  { key:'name',        label:'氏名',               enabled:true  },
+  { key:'temp',        label:'体温(°C)',            enabled:true  },
+  { key:'status',      label:'状態',               enabled:true  },
+  { key:'displayTime', label:'記録日時',            enabled:true  },
+  { key:'departTime',  label:'帰宅時刻',            enabled:true  },
+  { key:'timestamp',   label:'タイムスタンプ(ISO)', enabled:false },
+];
+// =====================================================
+
+const K = {
+  records:    'hcRec5',
+  departures: 'hcDep5',
+  members:    'hcMem5',
+  adminPw:    'hcAdminPw5',
+  lockPw:     'hcLockPw5',
+  csvCols:    'hcCsvCols5',
+  persist:    'hcPersist5',
+  kanaMode:   'hcKana5',
+  hidden:     'hcHidden5',
+  snacks:     'hcSnack5',   // { memberId: 'ate'|'skipped' }
+};
+
+let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
+let departures   = JSON.parse(localStorage.getItem(K.departures) || '{}');
+let members      = JSON.parse(localStorage.getItem(K.members)    || '[]');
+let snacks       = JSON.parse(localStorage.getItem(K.snacks)     || '{}');
+let adminPw      = localStorage.getItem(K.adminPw) || 'test1234';
+let lockPw       = localStorage.getItem(K.lockPw)  || 'test1234';
+let csvCols      = JSON.parse(localStorage.getItem(K.csvCols) || 'null') || JSON.parse(JSON.stringify(CSV_COLS_DEFAULT));
+let kanaMode     = localStorage.getItem(K.kanaMode) === 'true';
+// hiddenMembers: Set of member IDs to hide from main screen
+let hiddenMembers = new Set(JSON.parse(localStorage.getItem(K.hidden) || '[]'));
+let selectedName = null;
+
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const saveRecords     = () => save(K.records,    records);
+const saveDepartures  = () => save(K.departures, departures);
+const saveMembers     = () => save(K.members,    members);
+const saveCsvCols     = () => save(K.csvCols,    csvCols);
+const saveHidden      = () => save(K.hidden, [...hiddenMembers]);
+const saveSnacks      = () => save(K.snacks,     snacks);
+
+// ---- HELPERS ----
+function getStatus(t) {
+  if (t >= THRESHOLDS.HIGH_FEVER) return '高熱';
+  if (t >= THRESHOLDS.FEVER)      return '発熱';
+  return '正常';
+}
+
+function getBadgeClass(t) {
+  if (t >= THRESHOLDS.HIGH_FEVER) return 'badge-high-fever';
+  if (t >= THRESHOLDS.FEVER)      return 'badge-fever';
+  return 'badge-ok';
+}
+
+function getTempClass(t) {
+  if (t >= THRESHOLDS.HIGH_FEVER) return 'high-fever';
+  if (t >= THRESHOLDS.FEVER)      return 'fever';
+  return '';
+}
+
+function todayStr() { return new Date().toLocaleDateString('ja-JP'); }
+
+function hasTodayRecord(memberId) {
+  return records.some(r =>
+    r.nameId === memberId &&
+    new Date(r.timestamp).toLocaleDateString('ja-JP') === todayStr()
+  );
+}
+
+// ---- LOCK SCREEN ----
+function checkSession() {
+  // 永続ログイン済みかチェック
+  if (localStorage.getItem(K.persist) === 'yes') {
+    hideLock();
+    return;
+  }
+  // sessionStorage でタブ内ログイン済みかチェック
+  if (sessionStorage.getItem('hcSession') === 'yes') {
+    hideLock();
+    return;
+  }
+  // ロック画面を表示したまま
+}
+
+function hideLock() {
+  document.getElementById('lockScreen').classList.add('hidden');
+  renderNames();
+}
+
+function tryUnlock() {
+  const val    = document.getElementById('lockInput').value;
+  const input  = document.getElementById('lockInput');
+  const errEl  = document.getElementById('lockError');
+  const remember = document.getElementById('lockRemember').checked;
+
+  if (val === lockPw) {
+    // セッション内ログイン
+    sessionStorage.setItem('hcSession', 'yes');
+    // 「省略する」チェックがONなら永続保存
+    if (remember) {
+      localStorage.setItem(K.persist, 'yes');
+    }
+    hideLock();
+  } else {
+    input.classList.add('error');
+    errEl.textContent = 'パスワードが違います。もう一度入力してください。';
+    input.value = '';
+    setTimeout(() => {
+      input.classList.remove('error');
+      errEl.textContent = '';
+    }, 1200);
+  }
+}
+
+function clearPersistentLogin() {
+  localStorage.removeItem(K.persist);
+  sessionStorage.removeItem('hcSession');
+  showToast('省略設定を解除しました。次回から再度入力が必要になります。');
+}
+
+// ---- CLOCK ----
+function updateClock() {
+  const now = new Date();
+  document.getElementById('bigClock').textContent =
+    now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+  document.getElementById('bigDate').textContent =
+    now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ---- NAME LIST ----
+function getVisibleMembers() {
+  return members.filter(n => !hiddenMembers.has(n.id));
+}
+
+function renderNames() {
+  const panel = document.getElementById('namePanel');
+  const visible = getVisibleMembers();
+  if (!members.length) {
+    panel.innerHTML = `<div class="name-empty">
+      メンバーが登録されていません<br><br>
+      右下の設定ボタンから<br>メンバーを追加してください
+    </div>`;
+    return;
+  }
+  if (!visible.length) {
+    panel.innerHTML = `<div class="name-empty">
+      表示するメンバーがいません<br><br>
+      設定から表示する<br>メンバーを選んでください
+    </div>`;
+    return;
+  }
+  panel.innerHTML = visible.map(n => `
+    <div class="name-item ${selectedName?.id === n.id ? 'selected' : ''}"
+      onclick="selectName(${n.id})">${n.name}</div>
+  `).join('');
+}
+
+function selectName(id) {
+  // only select from visible members
+  selectedName = getVisibleMembers().find(n => n.id === id);
+  if (!selectedName) return;
+  renderNames();
+  const b = document.getElementById('selectedBadge');
+  b.textContent = selectedName.name + ' さん';
+  b.classList.add('active');
+  updateSubmitBtn();
+}
+
+// ---- TEMP ----
+document.getElementById('tempInput').addEventListener('input', updateSubmitBtn);
+
+// Scroll wheel on temp wrap → adjust temp
+document.getElementById('tempWrap').addEventListener('wheel', function(e) {
+  e.preventDefault();
+  const inp = document.getElementById('tempInput');
+  let v = parseFloat(inp.value) || 36.0;
+  // scroll up = higher temp, scroll down = lower temp
+  v += e.deltaY < 0 ? 0.1 : -0.1;
+  v = Math.round(v * 10) / 10;
+  if (v < 34.0) v = 34.0;
+  if (v > 42.0) v = 42.0;
+  inp.value = v.toFixed(1);
+  updateSubmitBtn();
+}, { passive: false });
+
+// Touch swipe on temp wrap → adjust temp
+(function(){
+  const wrap = document.getElementById('tempWrap');
+  let startY = null;
+  let startVal = null;
+  wrap.addEventListener('touchstart', function(e) {
+    // only track swipe if NOT on the input itself (so typing still works)
+    if (e.target === document.getElementById('tempInput')) return;
+    startY = e.touches[0].clientY;
+    startVal = parseFloat(document.getElementById('tempInput').value) || 36.0;
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', function(e) {
+    if (startY === null) return;
+    e.preventDefault();
+    const dy = startY - e.touches[0].clientY; // drag up = increase
+    const delta = Math.round(dy / 8) * 0.1;
+    const inp = document.getElementById('tempInput');
+    let v = Math.round((startVal + delta) * 10) / 10;
+    if (v < 34.0) v = 34.0;
+    if (v > 42.0) v = 42.0;
+    inp.value = v.toFixed(1);
+    updateSubmitBtn();
+  }, { passive: false });
+
+  wrap.addEventListener('touchend', function() {
+    startY = null;
+    startVal = null;
+  }, { passive: true });
+})();
+
+function updateSubmitBtn() {
+  const v = parseFloat(document.getElementById('tempInput').value);
+  const ok = selectedName && !isNaN(v) && v >= 34 && v <= 42;
+  document.getElementById('submitBtn').disabled = !ok;
+  document.getElementById('submitHint').textContent = ok
+    ? selectedName.name + ' さん、' + v.toFixed(1) + '°C で記録します'
+    : '名前と体温を確認してからボタンを押してください';
+}
+updateSubmitBtn();
+
+// ---- RECORD ----
+function recordData() {
+  const v = parseFloat(document.getElementById('tempInput').value);
+  if (!selectedName || isNaN(v)) return;
+  const now = new Date();
+  const displayTime = now.toLocaleString('ja-JP', {
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+
+  // 本日すでに記録がある場合は上書き
+  const today = todayStr();
+  const existingIdx = records.findIndex(r =>
+    r.nameId === selectedName.id &&
+    new Date(r.timestamp).toLocaleDateString('ja-JP') === today
+  );
+
+  if (existingIdx >= 0) {
+    records[existingIdx].temp        = v;
+    records[existingIdx].timestamp   = now.toISOString();
+    records[existingIdx].displayTime = displayTime;
+    saveRecords();
+    showToast(selectedName.name + ' さんの本日の記録を更新しました　' + v.toFixed(1) + '°C');
+  } else {
+    records.unshift({
+      id: Date.now(),
+      nameId: selectedName.id,
+      name: selectedName.name,
+      temp: v,
+      timestamp: now.toISOString(),
+      displayTime,
+      departTime: ''
+    });
+    saveRecords();
+    showToast(selectedName.name + ' さん　' + v.toFixed(1) + '°C　記録しました');
+  }
+
+  document.getElementById('tempInput').value = '36.0';
+  updateSubmitBtn();
+}
+
+// ---- MODALS ----
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el =>
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); })
+);
+
+// ---- ADMIN AUTH ----
+function openAdminAuth() {
+  document.getElementById('authInput').value = '';
+  document.getElementById('authError').textContent = '';
+  document.getElementById('authModal').classList.add('open');
+  setTimeout(() => document.getElementById('authInput').focus(), 300);
+}
+
+function verifyAuth() {
+  if (document.getElementById('authInput').value === adminPw) {
+    closeModal('authModal');
+    openAdminPanel();
+  } else {
+    document.getElementById('authError').textContent = 'パスワードが違います';
+    document.getElementById('authInput').value = '';
+  }
+}
+
+// ---- ADMIN PANEL ----
+function openAdminPanel() {
+  switchTab('records');
+  document.getElementById('adminModal').classList.add('open');
+}
+
+function switchTab(tab) {
+  const tabs = ['records','depart','snack','members','settings'];
+  document.querySelectorAll('.tab-btn').forEach((b,i) =>
+    b.classList.toggle('active', tabs[i] === tab)
+  );
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'records')  { renderStats(); renderRecordsTable(); }
+  if (tab === 'depart')   renderDepartGrid();
+  if (tab === 'snack')    renderSnackGrid();
+  if (tab === 'members')  { renderMemberList(); renderVisibilityGrid(); }
+  if (tab === 'settings') { renderCsvColSettings(); }
+}
+
+// ---- STATS ----
+function renderStats() {
+  const fever     = records.filter(r => r.temp >= THRESHOLDS.FEVER && r.temp < THRESHOLDS.HIGH_FEVER).length;
+  const highFever = records.filter(r => r.temp >= THRESHOLDS.HIGH_FEVER).length;
+  const avg       = records.length
+    ? (records.reduce((s,r) => s + r.temp, 0) / records.length).toFixed(1) : '--';
+  const today     = todayStr();
+  const todayCnt  = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === today).length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-val">${records.length}</div>
+      <div class="stat-label">総記録数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="${fever > 0 ? 'color:var(--danger)' : ''}">${fever}</div>
+      <div class="stat-label">発熱件数<br><span style="font-size:10px;color:var(--text-light)">${THRESHOLDS.FEVER}°C以上</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="${highFever > 0 ? 'color:#7c2d12' : ''}">${highFever}</div>
+      <div class="stat-label">高熱件数<br><span style="font-size:10px;color:var(--text-light)">${THRESHOLDS.HIGH_FEVER}°C以上</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">${avg}</div>
+      <div class="stat-label">平均体温</div>
+    </div>
+  `;
+}
+
+// ---- RECORDS TABLE ----
+function renderRecordsTable() {
+  const visibleCols = csvCols.filter(c => c.enabled);
+  const headCols = [
+    { key:'name',        label:'氏名'     },
+    { key:'temp',        label:'体温'     },
+    { key:'status',      label:'状態'     },
+    { key:'displayTime', label:'記録日時' },
+    { key:'departTime',  label:'帰宅時刻' },
+  ].filter(h => visibleCols.find(c => c.key === h.key));
+
+  document.getElementById('recordsTableHead').innerHTML =
+    [...headCols.map(h => `<th>${h.label}</th>`), '<th style="width:120px"></th>'].join('');
+
+  const q        = (document.getElementById('recordSearch')?.value || '').trim();
+  const filtered = records.filter(r => !q || r.name.includes(q) || String(r.temp).includes(q));
+  const tbody    = document.getElementById('recordsTbody');
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="${headCols.length + 1}" style="text-align:center;color:var(--text-muted);padding:30px">記録がありません</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const cells = headCols.map(h => {
+      if (h.key === 'temp')
+        return `<td class="temp-cell ${getTempClass(r.temp)}">${r.temp.toFixed(1)}°C</td>`;
+      if (h.key === 'status')
+        return `<td><span class="badge ${getBadgeClass(r.temp)}">${getStatus(r.temp)}</span></td>`;
+      if (h.key === 'displayTime')
+        return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${r.displayTime}</td>`;
+      if (h.key === 'departTime')
+        return `<td>${r.departTime
+          ? `<span class="badge badge-home">${r.departTime} 帰宅</span>`
+          : '<span style="color:var(--text-light);font-size:12px">—</span>'}</td>`;
+      return `<td style="font-weight:500">${r[h.key] || ''}</td>`;
+    }).join('');
+
+    return `<tr>${cells}
+      <td><div style="display:flex;gap:5px">
+        <button class="icon-btn" onclick="openEditModal(${r.id})">編集</button>
+        <button class="icon-btn del" onclick="deleteRecord(${r.id})">削除</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- EDIT RECORD ----
+function openEditModal(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('editId').value     = id;
+  document.getElementById('editTemp').value   = r.temp;
+  document.getElementById('editTime').value   = r.displayTime;
+  document.getElementById('editDepart').value = r.departTime || '';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function saveEdit() {
+  const id  = parseInt(document.getElementById('editId').value);
+  const idx = records.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const nt = parseFloat(document.getElementById('editTemp').value);
+  if (isNaN(nt) || nt < 34 || nt > 42) { showToast('体温の値が正しくありません', '#dc2626'); return; }
+  records[idx].temp        = nt;
+  records[idx].displayTime = document.getElementById('editTime').value;
+  records[idx].departTime  = document.getElementById('editDepart').value.trim();
+  saveRecords();
+  closeModal('editModal');
+  renderRecordsTable();
+  renderStats();
+  showToast('記録を更新しました');
+}
+
+function deleteRecord(id) {
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  renderRecordsTable();
+  renderStats();
+  showToast('削除しました', '#dc2626');
+}
+
+function clearAllData() {
+  records = [];
+  saveRecords();
+  renderRecordsTable();
+  renderStats();
+  showToast('全データを削除しました', '#dc2626');
+}
+
+// ---- DEPARTURE ----
+function renderDepartGrid() {
+  if (!members.length) {
+    document.getElementById('departGrid').innerHTML =
+      '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:14px;grid-column:1/-1">メンバーが登録されていません</div>';
+    return;
+  }
+
+  document.getElementById('departGrid').innerHTML = members.map(n => {
+    const done   = departures[n.id];
+    const hasRec = hasTodayRecord(n.id);
+    const locked = !done && !hasRec;
+
+    let hint = done
+      ? `<div class="depart-time-t">${done} 帰宅</div>`
+      : locked
+        ? '<div class="depart-locked-msg">本日の体温が未記録です</div>'
+        : '<div class="depart-hint">タップして帰宅時刻を記録</div>';
+
+    const cls     = done ? 'done' : locked ? 'locked' : '';
+    const onclick = (!done && !locked) ? `onclick="recordDepart(${n.id})"` : '';
+
+    return `<div class="depart-card ${cls}" ${onclick}>
+      <div class="depart-name-t">${n.name}</div>
+      ${hint}
+    </div>`;
+  }).join('');
+}
+
+function recordDepart(nameId) {
+  if (!hasTodayRecord(nameId)) return;
+  const now = new Date();
+  const t   = now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+  departures[nameId] = t;
+  saveDepartures();
+  const rec = records.find(r =>
+    r.nameId === nameId &&
+    new Date(r.timestamp).toLocaleDateString('ja-JP') === todayStr()
+  );
+  if (rec) { rec.departTime = t; saveRecords(); }
+  const nm = members.find(n => n.id === nameId)?.name || '';
+  showToast(nm + ' さん　' + t + ' 帰宅', '#d97706');
+  renderDepartGrid();
+}
+
+function resetDepartures() {
+  departures = {};
+  saveDepartures();
+  const today = todayStr();
+  let changed = false;
+  records.forEach(r => {
+    if (new Date(r.timestamp).toLocaleDateString('ja-JP') === today && r.departTime) {
+      r.departTime = '';
+      changed = true;
+    }
+  });
+  if (changed) saveRecords();
+  renderDepartGrid();
+  showToast('帰宅記録をリセットしました');
+}
+
+// ---- SNACK ----
+function renderSnackGrid() {
+  const grid = document.getElementById('snackGrid');
+  if (!members.length) {
+    grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:14px;grid-column:1/-1">メンバーが登録されていません</div>';
+    return;
+  }
+  grid.innerHTML = members.map(n => {
+    const hasRec  = hasTodayRecord(n.id);
+    const status  = snacks[n.id]; // 'ate' | 'skipped' | undefined
+    const locked  = !hasRec;
+
+    let statusHTML = '';
+    if (locked)          statusHTML = '<div class="snack-status locked-txt">本日の体温が未記録です</div>';
+    else if (!status)    statusHTML = '<div class="snack-status hint-txt">まだ記録されていません</div>';
+    else if (status==='ate')     statusHTML = '<div class="snack-status ate-txt">食べた</div>';
+    else if (status==='skipped') statusHTML = '<div class="snack-status skip-txt">食べなかった</div>';
+
+    const cardCls = locked ? 'snack-card locked' : status==='ate' ? 'snack-card ate' : status==='skipped' ? 'snack-card skipped' : 'snack-card';
+
+    const btnsHTML = locked ? '' : `
+      <div class="snack-btns">
+        <button class="snack-btn snack-btn-yes ${status==='ate'?'chosen':''}"
+          onclick="recordSnack(${n.id},'ate')">食べた</button>
+        <button class="snack-btn snack-btn-no ${status==='skipped'?'chosen':''}"
+          onclick="recordSnack(${n.id},'skipped')">食べなかった</button>
+      </div>`;
+
+    return `<div class="${cardCls}">
+      <div>
+        <div class="snack-name">${n.name}</div>
+        ${statusHTML}
+      </div>
+      ${btnsHTML}
+    </div>`;
+  }).join('');
+}
+
+function recordSnack(nameId, status) {
+  if (!hasTodayRecord(nameId)) return;
+  snacks[nameId] = status;
+  saveSnacks();
+  const nm = members.find(n => n.id === nameId)?.name || '';
+  const txt = status === 'ate' ? '食べた' : '食べなかった';
+  showToast(`${nm} さん　おやつ：${txt}`, status === 'ate' ? '#16a34a' : '#dc2626');
+  renderSnackGrid();
+}
+
+function resetSnacks() {
+  snacks = {};
+  saveSnacks();
+  renderSnackGrid();
+  showToast('おやつ記録をリセットしました');
+}
+function renderMemberList() {
+  const list  = document.getElementById('memberList');
+  const empty = document.getElementById('memberEmpty');
+  if (!members.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = members.map(n => `
+    <div class="member-row">
+      <div class="member-name">
+        ${n.name}
+        ${n.furigana ? `<span style="display:block;font-size:12px;color:var(--text-muted);font-weight:400;margin-top:2px">${n.furigana}</span>` : ''}
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="icon-btn" onclick="openEditMember(${n.id})">編集</button>
+        <button class="icon-btn del" onclick="deleteMember(${n.id})">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAddMember() {
+  document.getElementById('memberEditId').value     = '';
+  document.getElementById('memberNameInput').value  = '';
+  document.getElementById('memberFuriInput').value  = '';
+  document.getElementById('memberError').textContent = '';
+  document.getElementById('memberModalTitle').textContent = 'メンバーを追加';
+  document.getElementById('memberModal').classList.add('open');
+  setTimeout(() => document.getElementById('memberNameInput').focus(), 300);
+}
+
+function openEditMember(id) {
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('memberEditId').value     = id;
+  document.getElementById('memberNameInput').value  = m.name;
+  document.getElementById('memberFuriInput').value  = m.furigana || '';
+  document.getElementById('memberError').textContent = '';
+  document.getElementById('memberModalTitle').textContent = 'メンバーを編集';
+  document.getElementById('memberModal').classList.add('open');
+  setTimeout(() => document.getElementById('memberNameInput').focus(), 300);
+}
+
+function saveMember() {
+  const name     = document.getElementById('memberNameInput').value.trim();
+  const furigana = document.getElementById('memberFuriInput').value.trim();
+  const errEl    = document.getElementById('memberError');
+  if (!name) { errEl.textContent = '名前を入力してください'; return; }
+
+  const editId = document.getElementById('memberEditId').value;
+  if (editId) {
+    const idx = members.findIndex(x => x.id === parseInt(editId));
+    if (idx >= 0) {
+      members[idx].name     = name;
+      members[idx].furigana = furigana;
+      const mid = parseInt(editId);
+      records.forEach(r => { if (r.nameId === mid) r.name = name; });
+      saveRecords();
+    }
+    showToast('メンバーを更新しました');
+  } else {
+    members.push({ id: Date.now(), name, furigana });
+    showToast(name + ' さんを追加しました');
+  }
+
+  saveMembers();
+  closeModal('memberModal');
+  renderMemberList();
+  renderNames();
+  // refresh visibility grid if settings is open
+  if (document.getElementById('visibilityGrid')) renderVisibilityGrid();
+}
+
+function deleteMember(id) {
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  members = members.filter(x => x.id !== id);
+  hiddenMembers.delete(id);
+  saveMembers();
+  saveHidden();
+  if (selectedName?.id === id) {
+    selectedName = null;
+    const b = document.getElementById('selectedBadge');
+    b.textContent = '名前が選択されていません';
+    b.classList.remove('active');
+    updateSubmitBtn();
+  }
+  renderMemberList();
+  renderNames();
+  renderVisibilityGrid();
+  showToast(m.name + ' さんを削除しました', '#dc2626');
+}
+
+// ---- VISIBILITY SETTINGS ----
+function renderVisibilityGrid() {
+  const grid = document.getElementById('visibilityGrid');
+  if (!grid) return;
+  if (!members.length) {
+    grid.innerHTML = '<div style="color:var(--text-light);font-size:13px;padding:12px 0">メンバーが登録されていません</div>';
+    return;
+  }
+  grid.innerHTML = members.map(n => {
+    const visible = !hiddenMembers.has(n.id);
+    return `<div class="vis-item ${visible ? 'visible' : ''}" onclick="toggleVisibility(${n.id})">
+      <div class="vis-check">${visible ? '&#10003;' : ''}</div>
+      <div class="vis-name">
+        ${n.name}
+        ${n.furigana ? `<span class="vis-furi">${n.furigana}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleVisibility(id) {
+  if (hiddenMembers.has(id)) {
+    hiddenMembers.delete(id);
+  } else {
+    hiddenMembers.add(id);
+  }
+  saveHidden();
+  renderVisibilityGrid();
+  renderNames();
+}
+
+function setAllVisibility(show) {
+  if (show) {
+    hiddenMembers.clear();
+  } else {
+    members.forEach(n => hiddenMembers.add(n.id));
+  }
+  saveHidden();
+  renderVisibilityGrid();
+  renderNames();
+  showToast(show ? '全員を表示しました' : '全員を非表示にしました');
+}
+
+// ---- PASSWORDS ----
+function changeLockPassword() {
+  const v = document.getElementById('newLockPwInput').value.trim();
+  if (v.length < 4) { showToast('4文字以上のパスワードを入力してください', '#dc2626'); return; }
+  lockPw = v;
+  localStorage.setItem(K.lockPw, lockPw);
+  document.getElementById('newLockPwInput').value = '';
+  showToast('ログインパスワードを変更しました');
+}
+
+function changeAdminPassword() {
+  const v = document.getElementById('newAdminPwInput').value.trim();
+  if (v.length < 4) { showToast('4文字以上のパスワードを入力してください', '#dc2626'); return; }
+  adminPw = v;
+  localStorage.setItem(K.adminPw, adminPw);
+  document.getElementById('newAdminPwInput').value = '';
+  showToast('管理者パスワードを変更しました');
+}
+
+// ---- CSV COLS ----
+let dragSrc = null;
+
+function renderCsvColSettings() {
+  document.getElementById('csvColList').innerHTML = csvCols.map((col, idx) => `
+    <div class="csv-col-item" draggable="true"
+      data-idx="${idx}"
+      ondragstart="onDragStart(event,${idx})"
+      ondragover="onDragOver(event,${idx})"
+      ondragleave="onDragLeave(event)"
+      ondrop="onDrop(event,${idx})"
+      ondragend="onDragEnd()">
+      <span class="csv-drag-handle">&#8597;</span>
+      <input type="checkbox" ${col.enabled ? 'checked' : ''}
+        onchange="toggleCsvCol(${idx},this.checked)">
+      <span class="csv-col-label">${col.label}</span>
+      <span class="csv-col-key">${col.key}</span>
+    </div>
+  `).join('');
+}
+
+function toggleCsvCol(idx, checked) { csvCols[idx].enabled = checked; saveCsvCols(); }
+
+function onDragStart(e, idx) {
+  dragSrc = idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragOver(e, idx) {
+  e.preventDefault();
+  if (dragSrc === idx) return;
+  document.querySelectorAll('.csv-col-item').forEach(el => el.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+function onDrop(e, idx) {
+  e.preventDefault();
+  if (dragSrc === null || dragSrc === idx) return;
+  const moved = csvCols.splice(dragSrc, 1)[0];
+  csvCols.splice(idx, 0, moved);
+  saveCsvCols();
+  renderCsvColSettings();
+}
+
+function onDragEnd() {
+  dragSrc = null;
+  document.querySelectorAll('.csv-col-item').forEach(el => {
+    el.classList.remove('dragging');
+    el.classList.remove('drag-over');
+  });
+}
+
+function resetCsvCols() {
+  csvCols = JSON.parse(JSON.stringify(CSV_COLS_DEFAULT));
+  saveCsvCols();
+  renderCsvColSettings();
+  showToast('CSV列設定を初期化しました');
+}
+
+// ---- CSV EXPORT ----
+function exportCSV() {
+  if (!records.length) { showToast('記録がありません', '#dc2626'); return; }
+  const enabled = csvCols.filter(c => c.enabled);
+  const header  = enabled.map(c => c.label);
+  const rows    = records.map(r => enabled.map(c => {
+    if (c.key === 'temp')   return r.temp.toFixed(1);
+    if (c.key === 'status') return getStatus(r.temp);
+    return r[c.key] || '';
+  }));
+  const csv = '\uFEFF' + [header, ...rows]
+    .map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+    .join('\n');
+  const a = Object.assign(document.createElement('a'), {
+    href:     URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' })),
+    download: `体温記録_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.csv`
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('CSVファイルを出力しました');
+}
+
+// ---- TOAST ----
+function showToast(msg, color = '#2563eb') {
+  const t = document.getElementById('toast');
+  t.textContent     = msg;
+  t.style.color     = color;
+  t.style.borderColor = color + '55';
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ---- INIT ----
+checkSession();
+
+// iOS Safari: prevent rubber-band scroll on body but allow in scroll containers
+document.addEventListener('touchmove', function(e){
+  if(e.target === document.body || e.target === document.documentElement) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// Fix iOS Safari 100vh issue — recalculate on resize (keyboard open/close)
+function fixVh(){
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--real-vh', `${vh}px`);
+}
+fixVh();
+window.addEventListener('resize', fixVh);
+window.addEventListener('orientationchange', () => setTimeout(fixVh, 300));
+</script>
+</body>
+</html>
