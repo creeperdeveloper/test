@@ -60,7 +60,6 @@
     text-size-adjust:100%;
     /* prevent overscroll bounce on iOS/Android */
     overscroll-behavior:none;
-    touch-action:manipulation;
   }
 
   /* ===== LOCK SCREEN ===== */
@@ -252,6 +251,7 @@
     gap:4px;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
+    touch-action:pan-y;
   }
 
   .name-empty{
@@ -555,6 +555,7 @@
     align-items:stretch;
     justify-content:stretch;
     overflow:hidden;
+    touch-action:pan-y pan-x;
   }
 
   .modal-overlay.admin-overlay.open .modal{
@@ -572,6 +573,7 @@
     display:flex;
     flex-direction:column;
     overflow:hidden;
+    touch-action:pan-y pan-x;
     /* safe area */
     padding-top:max(24px, var(--safe-top));
     padding-bottom:max(20px, var(--safe-bottom));
@@ -605,8 +607,8 @@
 
   .tab-btn.active{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,0.1);}
 
-  .tab-content{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;min-height:0;}
-  .tab-content.active{display:flex;flex-direction:column;min-height:0;}
+  .tab-content{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;min-height:0;touch-action:pan-y;}
+  .tab-content.active{display:flex;flex-direction:column;min-height:0;overflow-y:auto;}
 
   /* STATS */
   .stats-grid{
@@ -635,6 +637,7 @@
     border:1px solid var(--border-light);border-radius:var(--radius-sm);
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
+    touch-action:pan-y pan-x;
   }
 
   .records-table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -722,6 +725,7 @@
     flex:1;overflow-y:auto;margin-bottom:14px;min-height:0;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
+    touch-action:pan-y;
   }
 
   .depart-card{
@@ -836,6 +840,7 @@
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
+    touch-action:pan-y;
   }
 
   .member-row{
@@ -2205,9 +2210,12 @@ function showToast(msg, color = '#2563eb') {
 // ---- INIT ----
 checkSession();
 
-// iOS Safari: prevent rubber-band scroll on body but allow in scroll containers
+// iOS Safari: prevent rubber-band scroll on body, but allow inside scrollable containers and open modals
 document.addEventListener('touchmove', function(e){
-  if(e.target === document.body || e.target === document.documentElement) {
+  // If admin modal is open, let all touches through — it handles its own scroll
+  if (document.getElementById('adminModal').classList.contains('open')) return;
+  // Otherwise only block touches that land directly on body/html
+  if (e.target === document.body || e.target === document.documentElement) {
     e.preventDefault();
   }
 }, { passive: false });
