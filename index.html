@@ -549,11 +549,38 @@
   .btn-secondary:active{color:var(--text);background:var(--surface2);}
 
   /* ===== ADMIN MODAL ===== */
-  .admin-modal{
-    max-width:min(96vw,880px);
-    max-height:90vh;
-    display:flex;flex-direction:column;
+  /* ===== ADMIN MODAL — FULLSCREEN ===== */
+  .modal-overlay.admin-overlay{
+    padding:0;
+    align-items:stretch;
+    justify-content:stretch;
+    overflow:hidden;
   }
+
+  .modal-overlay.admin-overlay.open .modal{
+    transform:none;
+  }
+
+  .admin-modal{
+    width:100%;
+    height:100%;
+    max-width:none;
+    max-height:none;
+    border-radius:0;
+    border:none;
+    box-shadow:none;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    /* safe area */
+    padding-top:max(24px, var(--safe-top));
+    padding-bottom:max(20px, var(--safe-bottom));
+    padding-left:max(28px, var(--safe-left));
+    padding-right:max(28px, var(--safe-right));
+  }
+
+  .admin-modal .modal-h{font-size:20px;margin-bottom:2px;}
+  .admin-modal .modal-sub{margin-bottom:10px;}
 
   .admin-tabs{
     display:flex;gap:3px;
@@ -578,8 +605,8 @@
 
   .tab-btn.active{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,0.1);}
 
-  .tab-content{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
-  .tab-content.active{display:block;}
+  .tab-content{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;min-height:0;}
+  .tab-content.active{display:flex;flex-direction:column;min-height:0;}
 
   /* STATS */
   .stats-grid{
@@ -602,7 +629,9 @@
 
   /* TABLE */
   .tbl-wrap{
-    overflow-x:auto;max-height:280px;overflow-y:auto;
+    flex:1;
+    overflow-x:auto;overflow-y:auto;
+    min-height:0;
     border:1px solid var(--border-light);border-radius:var(--radius-sm);
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
@@ -690,7 +719,7 @@
   /* DEPARTURE */
   .depart-grid{
     display:grid;grid-template-columns:1fr 1fr;gap:8px;
-    max-height:340px;overflow-y:auto;margin-bottom:14px;
+    flex:1;overflow-y:auto;margin-bottom:14px;min-height:0;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
   }
@@ -804,7 +833,7 @@
   /* MEMBER LIST */
   .member-list{
     display:flex;flex-direction:column;gap:6px;
-    max-height:360px;overflow-y:auto;
+    overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
   }
@@ -987,7 +1016,6 @@
   /* iPad Pro 12.9" landscape / large tablet */
   @media (min-width:1024px){
     .main{grid-template-columns:260px 1fr;}
-    .admin-modal{max-width:860px;}
     .big-clock{font-size:46px;}
     .stats-grid{grid-template-columns:repeat(4,1fr);}
   }
@@ -995,7 +1023,6 @@
   /* iPad 10" / iPad Air landscape */
   @media (min-width:768px) and (max-width:1023px) and (orientation:landscape){
     .main{grid-template-columns:220px 1fr;}
-    .admin-modal{max-width:min(94vw,780px);}
     .stats-grid{grid-template-columns:repeat(4,1fr);}
     .big-clock{font-size:38px;}
   }
@@ -1005,7 +1032,6 @@
     .main{grid-template-columns:200px 1fr;}
     .stats-grid{grid-template-columns:repeat(2,1fr);}
     .big-clock{font-size:36px;}
-    .admin-modal{max-width:min(92vw,680px);}
     .depart-grid{grid-template-columns:1fr 1fr;}
   }
 
@@ -1026,7 +1052,6 @@
     .big-date{font-size:11px;}
     .temp-input{font-size:48px;width:140px;}
     .submit-btn{padding:16px 40px;font-size:16px;}
-    .admin-modal{max-width:100%;border-radius:14px;}
     .admin-tabs .tab-btn{font-size:12px;padding:9px 4px;}
   }
 
@@ -1118,7 +1143,7 @@
 </div>
 
 <!-- ===== ADMIN MODAL ===== -->
-<div class="modal-overlay" id="adminModal">
+<div class="modal-overlay admin-overlay" id="adminModal">
   <div class="modal admin-modal">
     <div class="modal-h">管理パネル</div>
     <div class="modal-sub" style="margin-bottom:14px">記録の確認・帰宅管理・メンバー・設定</div>
@@ -1133,8 +1158,8 @@
 
     <!-- RECORDS -->
     <div class="tab-content active" id="tab-records">
-      <div class="stats-grid" id="statsGrid"></div>
-      <div class="action-bar">
+      <div class="stats-grid" id="statsGrid" style="flex-shrink:0"></div>
+      <div class="action-bar" style="flex-shrink:0">
         <input class="search-input" type="text" placeholder="名前や体温で検索..."
           id="recordSearch" oninput="renderRecordsTable()">
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1152,21 +1177,21 @@
 
     <!-- DEPARTURE -->
     <div class="tab-content" id="tab-depart">
-      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px">
+      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px;flex-shrink:0">
         本日の体温が記録されている方のみ帰宅時刻を記録できます
       </div>
       <div class="depart-grid" id="departGrid"></div>
-      <button class="btn-secondary" style="width:100%;font-size:14px"
+      <button class="btn-secondary" style="width:100%;font-size:14px;flex-shrink:0"
         onclick="resetDepartures()">本日の帰宅記録をリセット</button>
     </div>
 
     <!-- SNACK -->
     <div class="tab-content" id="tab-snack">
-      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px">
+      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px;flex-shrink:0">
         タップでおやつの有無を記録します。本日の体温が記録されている方のみ記録できます
       </div>
       <div class="depart-grid" id="snackGrid"></div>
-      <button class="btn-secondary" style="width:100%;font-size:14px;margin-top:4px"
+      <button class="btn-secondary" style="width:100%;font-size:14px;margin-top:8px;flex-shrink:0"
         onclick="resetSnacks()">本日のおやつ記録をリセット</button>
     </div>
 
@@ -1684,17 +1709,18 @@ function renderStats() {
 
 // ---- RECORDS TABLE ----
 function renderRecordsTable() {
-  const visibleCols = csvCols.filter(c => c.enabled);
+  // Always show these columns (regardless of CSV col settings which are for export only)
   const headCols = [
     { key:'name',        label:'氏名'     },
     { key:'temp',        label:'体温'     },
     { key:'status',      label:'状態'     },
     { key:'displayTime', label:'記録日時' },
     { key:'departTime',  label:'帰宅時刻' },
-  ].filter(h => visibleCols.find(c => c.key === h.key));
+    { key:'snack',       label:'おやつ'  },
+  ];
 
   document.getElementById('recordsTableHead').innerHTML =
-    [...headCols.map(h => `<th>${h.label}</th>`), '<th style="width:120px"></th>'].join('');
+    [...headCols.map(h => `<th>${h.label}</th>`), '<th style="width:110px;flex-shrink:0"></th>'].join('');
 
   const q        = (document.getElementById('recordSearch')?.value || '').trim();
   const filtered = records.filter(r => !q || r.name.includes(q) || String(r.temp).includes(q));
@@ -1706,6 +1732,14 @@ function renderRecordsTable() {
   }
 
   tbody.innerHTML = filtered.map(r => {
+    const snackVal = snacks[r.nameId];
+    const snackLabel = snackVal === 'ate' ? '食べた' : snackVal === 'skipped' ? '食べなかった' : '—';
+    const snackStyle = snackVal === 'ate'
+      ? 'color:#16a34a;font-weight:600'
+      : snackVal === 'skipped'
+        ? 'color:#dc2626;font-weight:600'
+        : 'color:var(--text-light)';
+
     const cells = headCols.map(h => {
       if (h.key === 'temp')
         return `<td class="temp-cell ${getTempClass(r.temp)}">${r.temp.toFixed(1)}°C</td>`;
@@ -1717,6 +1751,8 @@ function renderRecordsTable() {
         return `<td>${r.departTime
           ? `<span class="badge badge-home">${r.departTime} 帰宅</span>`
           : '<span style="color:var(--text-light);font-size:12px">—</span>'}</td>`;
+      if (h.key === 'snack')
+        return `<td><span style="font-size:13px;${snackStyle}">${snackLabel}</span></td>`;
       return `<td style="font-weight:500">${r[h.key] || ''}</td>`;
     }).join('');
 
