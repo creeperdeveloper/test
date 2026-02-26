@@ -42,23 +42,19 @@
 
   html{
     height:100%;
-    /* Android Chrome address bar fix */
-    height:-webkit-fill-available;
   }
 
   body{
     background:var(--bg);
     color:var(--text);
     font-family:'Noto Sans JP',sans-serif;
-    height:100vh;
-    height:-webkit-fill-available; /* Android Chrome */
-    height:100dvh;                 /* modern browsers */
+    height:100%;
+    height:100svh; /* small viewport height — stays stable on iPad when toolbar shows/hides */
     overflow:hidden;
     display:flex;
     flex-direction:column;
     -webkit-text-size-adjust:100%;
     text-size-adjust:100%;
-    /* prevent overscroll bounce on iOS/Android */
     overscroll-behavior:none;
   }
 
@@ -550,6 +546,15 @@
 
   /* ===== ADMIN MODAL ===== */
   /* ===== ADMIN MODAL — FULLSCREEN ===== */
+
+  /* Body lock — prevents iPad Safari touch coordinate offset bug.
+     When modal is open, body is frozen in position so iOS doesn't
+     accumulate a phantom scroll offset that shifts touch targets. */
+  body.modal-open{
+    position:fixed;
+    top:0;left:0;right:0;bottom:0;
+    overflow:hidden;
+  }
   .modal-overlay.admin-overlay{
     padding:0;
     align-items:stretch;
@@ -1639,7 +1644,13 @@ function recordData() {
 }
 
 // ---- MODALS ----
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  // Release body lock when admin panel closes
+  if (id === 'adminModal') {
+    document.body.classList.remove('modal-open');
+  }
+}
 
 document.querySelectorAll('.modal-overlay').forEach(el =>
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); })
@@ -1665,6 +1676,9 @@ function verifyAuth() {
 
 // ---- ADMIN PANEL ----
 function openAdminPanel() {
+  // Lock body position — prevents iPad Safari from misreporting touch coordinates
+  // on fixed-position overlays due to viewport/scroll offset mismatch
+  document.body.classList.add('modal-open');
   switchTab('records');
   document.getElementById('adminModal').classList.add('open');
 }
@@ -2210,11 +2224,11 @@ function showToast(msg, color = '#2563eb') {
 // ---- INIT ----
 checkSession();
 
-// iOS Safari: prevent rubber-band scroll on body, but allow inside scrollable containers and open modals
+// iOS Safari: prevent rubber-band scroll on body, but allow inside open modals
 document.addEventListener('touchmove', function(e){
-  // If admin modal is open, let all touches through — it handles its own scroll
-  if (document.getElementById('adminModal').classList.contains('open')) return;
-  // Otherwise only block touches that land directly on body/html
+  // Allow all touches when admin modal is open (it handles its own scrolling)
+  if (document.body.classList.contains('modal-open')) return;
+  // Block body/html touches to prevent bounce
   if (e.target === document.body || e.target === document.documentElement) {
     e.preventDefault();
   }
