@@ -463,6 +463,104 @@
 
   .admin-btn:active{border-color:var(--accent);color:var(--accent);}
 
+  /* Clock button (left of admin-btn) */
+  .clock-btn{
+    position:fixed;
+    bottom:calc(24px + var(--safe-bottom));
+    right:calc(24px + var(--safe-right) + 64px); /* 52px button + 12px gap */
+    width:52px;height:52px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.92);
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    font-size:18px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.2s;
+    z-index:100;
+    box-shadow:var(--shadow);
+    -webkit-appearance:none;
+  }
+  .clock-btn:active{border-color:var(--accent);color:var(--accent);}
+  @media (hover:hover) and (pointer:fine){
+    .clock-btn:hover{border-color:var(--accent);color:var(--accent);}
+  }
+
+  /* ===== FULLSCREEN CLOCK ===== */
+  #clockScreen{
+    position:fixed;inset:0;
+    background:linear-gradient(160deg,#0a0f1e 0%,#0d1b3e 50%,#091528 100%);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    z-index:300;
+    opacity:0;pointer-events:none;
+    transition:opacity 0.35s;
+    padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  }
+  #clockScreen.open{opacity:1;pointer-events:all;}
+
+  .fc-date{
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(14px,2.5vw,22px);
+    font-weight:300;
+    color:rgba(147,197,253,0.75);
+    letter-spacing:0.25em;
+    margin-bottom:16px;
+    text-transform:uppercase;
+  }
+
+  .fc-time{
+    font-family:'DM Mono',monospace;
+    font-size:clamp(72px,18vw,160px);
+    font-weight:300;
+    color:#fff;
+    letter-spacing:-0.02em;
+    line-height:1;
+    text-shadow:0 0 80px rgba(96,165,250,0.4), 0 0 160px rgba(96,165,250,0.15);
+  }
+
+  .fc-secs{
+    font-family:'DM Mono',monospace;
+    font-size:clamp(28px,6vw,56px);
+    font-weight:300;
+    color:rgba(147,197,253,0.6);
+    margin-top:8px;
+    letter-spacing:0.08em;
+  }
+
+  .fc-day{
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(13px,2vw,18px);
+    font-weight:400;
+    color:rgba(147,197,253,0.5);
+    margin-top:24px;
+    letter-spacing:0.12em;
+  }
+
+  .fc-back-btn{
+    position:fixed;
+    bottom:calc(36px + var(--safe-bottom));
+    right:calc(36px + var(--safe-right));
+    padding:14px 32px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:100px;
+    color:rgba(255,255,255,0.7);
+    font-size:15px;
+    font-weight:500;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+    letter-spacing:0.06em;
+    transition:all 0.2s;
+    -webkit-appearance:none;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .fc-back-btn:active{background:rgba(255,255,255,0.18);}
+  @media (hover:hover) and (pointer:fine){
+    .fc-back-btn:hover{background:rgba(255,255,255,0.14);color:#fff;}
+  }
+
   /* ===== MODAL BASE ===== */
   .modal-overlay{
     position:fixed;inset:0;
@@ -1134,8 +1232,18 @@
   </div>
 </div>
 
+<button class="clock-btn" onclick="openClock()" title="時計">🕐</button>
 <button class="admin-btn" onclick="openAdminAuth()" title="管理画面">&#9881;</button>
 <div class="toast" id="toast"></div>
+
+<!-- ===== FULLSCREEN CLOCK ===== -->
+<div id="clockScreen">
+  <div class="fc-date" id="fcDate"></div>
+  <div class="fc-time" id="fcTime">--:--</div>
+  <div class="fc-secs" id="fcSecs">--</div>
+  <div class="fc-day"  id="fcDay"></div>
+  <button class="fc-back-btn" onclick="closeClock()">← 入力画面へ戻る</button>
+</div>
 
 <!-- ===== AUTH MODAL ===== -->
 <div class="modal-overlay" id="authModal">
@@ -1325,6 +1433,18 @@
   </div>
 </div>
 
+<!-- CUSTOM CONFIRM MODAL (replaces browser confirm() for iPad compatibility) -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-h" id="confirmTitle">確認</div>
+    <div class="modal-sub" id="confirmMsg" style="white-space:pre-line"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="confirmCancel()">キャンセル</button>
+      <button id="confirmOkBtn" class="btn-primary" onclick="confirmOk()">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT RECORD MODAL -->
 <div class="modal-overlay" id="editModal">
   <div class="modal" style="max-width:360px">
@@ -1387,6 +1507,7 @@ const K = {
 let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
 let departures   = JSON.parse(localStorage.getItem(K.departures) || '{}');
 let members      = JSON.parse(localStorage.getItem(K.members)    || '[]');
+// snacks: { 'YYYY/MM/DD': { nameId: 'ate'|'skipped' } }
 let snacks       = JSON.parse(localStorage.getItem(K.snacks)     || '{}');
 let adminPw      = localStorage.getItem(K.adminPw) || 'test1234';
 let lockPw       = localStorage.getItem(K.lockPw)  || 'test1234';
@@ -1403,6 +1524,39 @@ const saveMembers     = () => save(K.members,    members);
 const saveCsvCols     = () => save(K.csvCols,    csvCols);
 const saveHidden      = () => save(K.hidden, [...hiddenMembers]);
 const saveSnacks      = () => save(K.snacks,     snacks);
+
+// ---- DATA MIGRATIONS ----
+// Migrate old flat snacks format { nameId: status } → { 'date': { nameId: status } }
+(function migrateSnacks() {
+  if (!snacks || typeof snacks !== 'object') { snacks = {}; return; }
+  const keys = Object.keys(snacks);
+  if (!keys.length) return;
+  // If first key is NOT a date string (YYYY/M/D format), it's old flat format
+  const looksLikeDate = /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(keys[0]);
+  if (!looksLikeDate) {
+    // Old format: wrap under today's date as best guess
+    const today = new Date().toLocaleDateString('ja-JP');
+    snacks = { [today]: snacks };
+    saveSnacks();
+  }
+})();
+
+// Ensure csvCols always has snack column enabled
+(function patchCsvCols() {
+  const hasSnack = csvCols.some(c => c.key === 'snack');
+  if (!hasSnack) {
+    // Insert snack before timestamp column
+    const tsIdx = csvCols.findIndex(c => c.key === 'timestamp');
+    const snackCol = { key:'snack', label:'おやつ', enabled:true };
+    if (tsIdx >= 0) csvCols.splice(tsIdx, 0, snackCol);
+    else csvCols.push(snackCol);
+    saveCsvCols();
+  } else {
+    // Make sure snack is enabled
+    const sc = csvCols.find(c => c.key === 'snack');
+    if (sc && !sc.enabled) { sc.enabled = true; saveCsvCols(); }
+  }
+})();
 
 // ---- HELPERS ----
 function getStatus(t) {
@@ -1484,15 +1638,48 @@ function clearPersistentLogin() {
 }
 
 // ---- CLOCK ----
+const DAYS_JA = ['日','月','火','水','木','金','土'];
 function updateClock() {
   const now = new Date();
-  document.getElementById('bigClock').textContent =
-    now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
-  document.getElementById('bigDate').textContent =
-    now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
+  const h  = String(now.getHours()).padStart(2,'0');
+  const m  = String(now.getMinutes()).padStart(2,'0');
+  const s  = String(now.getSeconds()).padStart(2,'0');
+  const hm = `${h}:${m}`;
+  const dateStr = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
+  const dayStr  = DAYS_JA[now.getDay()] + '曜日';
+
+  // Main screen clock
+  const bc = document.getElementById('bigClock');
+  const bd = document.getElementById('bigDate');
+  if (bc) bc.textContent = `${hm}:${s}`;
+  if (bd) bd.textContent = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
+
+  // Fullscreen clock
+  const cs = document.getElementById('clockScreen');
+  if (cs && cs.classList.contains('open')) {
+    document.getElementById('fcDate').textContent = dateStr;
+    document.getElementById('fcTime').textContent = hm;
+    document.getElementById('fcSecs').textContent = s;
+    document.getElementById('fcDay').textContent  = dayStr;
+  }
 }
 setInterval(updateClock, 1000);
 updateClock();
+
+// ---- FULLSCREEN CLOCK ----
+function openClock() {
+  // Update immediately so no blank flash
+  const now = new Date();
+  document.getElementById('fcDate').textContent = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
+  document.getElementById('fcTime').textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('fcSecs').textContent = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('fcDay').textContent  = DAYS_JA[now.getDay()] + '曜日';
+  document.getElementById('clockScreen').classList.add('open');
+}
+
+function closeClock() {
+  document.getElementById('clockScreen').classList.remove('open');
+}
 
 // ---- NAME LIST ----
 function getVisibleMembers() {
@@ -1603,16 +1790,37 @@ function updateSubmitBtn() {
 updateSubmitBtn();
 
 // ---- RECORD ----
+// ---- CUSTOM CONFIRM MODAL ----
+let _confirmCallback = null;
+function showConfirm(title, msg, okLabel, okColor, callback) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent   = msg;
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.textContent = okLabel || 'OK';
+  okBtn.style.background = okColor || '';
+  _confirmCallback = callback;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function confirmOk() {
+  document.getElementById('confirmModal').classList.remove('open');
+  if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+}
+function confirmCancel() {
+  document.getElementById('confirmModal').classList.remove('open');
+  _confirmCallback = null;
+}
+
+// ---- RECORD DATA ----
 function recordData() {
   const v = parseFloat(document.getElementById('tempInput').value);
   if (!selectedName || isNaN(v)) return;
+
   const now = new Date();
   const displayTime = now.toLocaleString('ja-JP', {
     year:'numeric', month:'2-digit', day:'2-digit',
     hour:'2-digit', minute:'2-digit', second:'2-digit'
   });
 
-  // 本日すでに記録がある場合は上書き
   const today = todayStr();
   const existingIdx = records.findIndex(r =>
     r.nameId === selectedName.id &&
@@ -1620,11 +1828,22 @@ function recordData() {
   );
 
   if (existingIdx >= 0) {
-    records[existingIdx].temp        = v;
-    records[existingIdx].timestamp   = now.toISOString();
-    records[existingIdx].displayTime = displayTime;
-    saveRecords();
-    showToast(selectedName.name + ' さんの本日の記録を更新しました　' + v.toFixed(1) + '°C');
+    const prev = records[existingIdx].temp.toFixed(1);
+    showConfirm(
+      '記録の上書き確認',
+      `${selectedName.name} さんは本日すでに\n${prev}°C を記録しています。\n\n${v.toFixed(1)}°C に上書きしますか？`,
+      '上書きする',
+      'var(--warn)',
+      () => {
+        records[existingIdx].temp        = v;
+        records[existingIdx].timestamp   = now.toISOString();
+        records[existingIdx].displayTime = displayTime;
+        saveRecords();
+        showToast(selectedName.name + ' さんの記録を更新しました　' + v.toFixed(1) + '°C', 'var(--warn)');
+        document.getElementById('tempInput').value = '36.0';
+        updateSubmitBtn();
+      }
+    );
   } else {
     records.unshift({
       id: Date.now(),
@@ -1637,10 +1856,9 @@ function recordData() {
     });
     saveRecords();
     showToast(selectedName.name + ' さん　' + v.toFixed(1) + '°C　記録しました');
+    document.getElementById('tempInput').value = '36.0';
+    updateSubmitBtn();
   }
-
-  document.getElementById('tempInput').value = '36.0';
-  updateSubmitBtn();
 }
 
 // ---- MODALS ----
@@ -1728,63 +1946,155 @@ function renderStats() {
 
 // ---- RECORDS TABLE ----
 function renderRecordsTable() {
-  // Always show these columns (regardless of CSV col settings which are for export only)
   const headCols = [
     { key:'name',        label:'氏名'     },
     { key:'temp',        label:'体温'     },
     { key:'status',      label:'状態'     },
-    { key:'displayTime', label:'記録日時' },
-    { key:'departTime',  label:'帰宅時刻' },
+    { key:'displayTime', label:'記録時刻' },
+    { key:'departTime',  label:'帰宅'     },
     { key:'snack',       label:'おやつ'  },
   ];
 
   document.getElementById('recordsTableHead').innerHTML =
-    [...headCols.map(h => `<th>${h.label}</th>`), '<th style="width:110px;flex-shrink:0"></th>'].join('');
+    [...headCols.map(h => `<th>${h.label}</th>`), '<th style="width:110px"></th>'].join('');
 
-  const q        = (document.getElementById('recordSearch')?.value || '').trim();
+  const q = (document.getElementById('recordSearch')?.value || '').trim();
   const filtered = records.filter(r => !q || r.name.includes(q) || String(r.temp).includes(q));
-  const tbody    = document.getElementById('recordsTbody');
+  const tbody = document.getElementById('recordsTbody');
 
   if (!filtered.length) {
     tbody.innerHTML = `<tr><td colspan="${headCols.length + 1}" style="text-align:center;color:var(--text-muted);padding:30px">記録がありません</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered.map(r => {
-    const snackVal = snacks[r.nameId];
-    const snackLabel = snackVal === 'ate' ? '食べた' : snackVal === 'skipped' ? '食べなかった' : '—';
-    const snackStyle = snackVal === 'ate'
-      ? 'color:#16a34a;font-weight:600'
-      : snackVal === 'skipped'
-        ? 'color:#dc2626;font-weight:600'
+  // Group by date string
+  const groups = {};
+  filtered.forEach(r => {
+    const d = new Date(r.timestamp).toLocaleDateString('ja-JP');
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(r);
+  });
+
+  // Sort dates descending
+  const sortedDates = Object.keys(groups).sort((a, b) =>
+    new Date(b.replace(/\//g,'-')) - new Date(a.replace(/\//g,'-'))
+  );
+
+  let html = '';
+  sortedDates.forEach(dateStr => {
+    const dayRecords = groups[dateStr];
+    const colSpan = headCols.length + 1;
+    const isToday = dateStr === todayStr();
+
+    // Date header row
+    html += `<tr>
+      <td colspan="${colSpan}" style="background:var(--surface2);padding:8px 12px;border-bottom:1px solid var(--border-light);">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:13px;font-weight:700;color:var(--text)">${dateStr}${isToday ? '　（本日）' : ''}</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:12px;color:var(--text-muted)">${dayRecords.length} 件</span>
+            <button class="small-btn btn-csv" style="font-size:11px;padding:4px 10px"
+              onclick="exportCSVByDate('${dateStr}')">CSV</button>
+            <button class="small-btn btn-del" style="font-size:11px;padding:4px 10px"
+              onclick="deleteByDate('${dateStr}')">削除</button>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+
+    // Records for this date
+    dayRecords.forEach(r => {
+      const snackVal = getSnackForRecord(r);
+      const snackLabel = snackVal === 'ate' ? '食べた' : snackVal === 'skipped' ? '食べなかった' : '—';
+      const snackStyle = snackVal === 'ate' ? 'color:#16a34a;font-weight:600'
+        : snackVal === 'skipped' ? 'color:#dc2626;font-weight:600'
         : 'color:var(--text-light)';
 
-    const cells = headCols.map(h => {
-      if (h.key === 'temp')
-        return `<td class="temp-cell ${getTempClass(r.temp)}">${r.temp.toFixed(1)}°C</td>`;
-      if (h.key === 'status')
-        return `<td><span class="badge ${getBadgeClass(r.temp)}">${getStatus(r.temp)}</span></td>`;
-      if (h.key === 'displayTime')
-        return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${r.displayTime}</td>`;
-      if (h.key === 'departTime')
-        return `<td>${r.departTime
-          ? `<span class="badge badge-home">${r.departTime} 帰宅</span>`
-          : '<span style="color:var(--text-light);font-size:12px">—</span>'}</td>`;
-      if (h.key === 'snack')
-        return `<td><span style="font-size:13px;${snackStyle}">${snackLabel}</span></td>`;
-      return `<td style="font-weight:500">${r[h.key] || ''}</td>`;
-    }).join('');
+      const cells = headCols.map(h => {
+        if (h.key === 'temp')
+          return `<td class="temp-cell ${getTempClass(r.temp)}">${r.temp.toFixed(1)}°C</td>`;
+        if (h.key === 'status')
+          return `<td><span class="badge ${getBadgeClass(r.temp)}">${getStatus(r.temp)}</span></td>`;
+        if (h.key === 'displayTime') {
+          // Show only time part inside date group
+          const t = r.displayTime ? r.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '') : '';
+          return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${t}</td>`;
+        }
+        if (h.key === 'departTime')
+          return `<td>${r.departTime
+            ? `<span class="badge badge-home">${r.departTime}</span>`
+            : '<span style="color:var(--text-light);font-size:12px">—</span>'}</td>`;
+        if (h.key === 'snack')
+          return `<td><span style="font-size:13px;${snackStyle}">${snackLabel}</span></td>`;
+        return `<td style="font-weight:500">${r[h.key] || ''}</td>`;
+      }).join('');
 
-    return `<tr>${cells}
-      <td><div style="display:flex;gap:5px">
-        <button class="icon-btn" onclick="openEditModal(${r.id})">編集</button>
-        <button class="icon-btn del" onclick="deleteRecord(${r.id})">削除</button>
-      </div></td>
-    </tr>`;
-  }).join('');
+      html += `<tr>${cells}
+        <td><div style="display:flex;gap:5px">
+          <button class="icon-btn" onclick="openEditModal(${r.id})">編集</button>
+          <button class="icon-btn del" onclick="deleteRecord(${r.id})">削除</button>
+        </div></td>
+      </tr>`;
+    });
+  });
+
+  tbody.innerHTML = html;
 }
 
-// ---- EDIT RECORD ----
+function deleteByDate(dateStr) {
+  const count = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr).length;
+  showConfirm(
+    '日付別削除',
+    `${dateStr} の記録 ${count}件 を\nすべて削除しますか？\nこの操作は取り消せません。`,
+    '削除する',
+    'var(--danger)',
+    () => {
+      records = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') !== dateStr);
+      delete snacks[dateStr];
+      saveRecords();
+      saveSnacks();
+      renderStats();
+      renderRecordsTable();
+      showToast(`${dateStr} の記録を削除しました`, '#dc2626');
+    }
+  );
+}
+
+function deleteRecord(id) {
+  showConfirm(
+    '記録を削除',
+    'この記録を削除しますか？\nこの操作は取り消せません。',
+    '削除する',
+    'var(--danger)',
+    () => {
+      records = records.filter(r => r.id !== id);
+      saveRecords();
+      renderRecordsTable();
+      renderStats();
+      showToast('削除しました', '#dc2626');
+    }
+  );
+}
+
+function clearAllData() {
+  showConfirm(
+    '全データ削除',
+    'すべての記録を削除しますか？\nおやつ・帰宅記録も含め\nすべて消えます。この操作は取り消せません。',
+    '全削除する',
+    'var(--danger)',
+    () => {
+      records    = [];
+      snacks     = {};
+      departures = {};
+      saveRecords();
+      saveSnacks();
+      saveDepartures();
+      renderRecordsTable();
+      renderStats();
+      showToast('全データを削除しました', '#dc2626');
+    }
+  );
+}
 function openEditModal(id) {
   const r = records.find(x => x.id === id);
   if (!r) return;
@@ -1809,22 +2119,6 @@ function saveEdit() {
   renderRecordsTable();
   renderStats();
   showToast('記録を更新しました');
-}
-
-function deleteRecord(id) {
-  records = records.filter(r => r.id !== id);
-  saveRecords();
-  renderRecordsTable();
-  renderStats();
-  showToast('削除しました', '#dc2626');
-}
-
-function clearAllData() {
-  records = [];
-  saveRecords();
-  renderRecordsTable();
-  renderStats();
-  showToast('全データを削除しました', '#dc2626');
 }
 
 // ---- DEPARTURE ----
@@ -1889,25 +2183,33 @@ function resetDepartures() {
 }
 
 // ---- SNACK ----
+function getSnackForDate(nameId, dateStr) {
+  return (snacks[dateStr] || {})[nameId];
+}
+function getSnackForRecord(r) {
+  const dateStr = new Date(r.timestamp).toLocaleDateString('ja-JP');
+  return getSnackForDate(r.nameId, dateStr);
+}
+
 function renderSnackGrid() {
   const grid = document.getElementById('snackGrid');
   if (!members.length) {
     grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:14px;grid-column:1/-1">メンバーが登録されていません</div>';
     return;
   }
+  const today = todayStr();
   grid.innerHTML = members.map(n => {
-    const hasRec  = hasTodayRecord(n.id);
-    const status  = snacks[n.id]; // 'ate' | 'skipped' | undefined
-    const locked  = !hasRec;
+    const hasRec = hasTodayRecord(n.id);
+    const status = getSnackForDate(n.id, today);
+    const locked = !hasRec;
 
     let statusHTML = '';
-    if (locked)          statusHTML = '<div class="snack-status locked-txt">本日の体温が未記録です</div>';
-    else if (!status)    statusHTML = '<div class="snack-status hint-txt">まだ記録されていません</div>';
+    if (locked)               statusHTML = '<div class="snack-status locked-txt">本日の体温が未記録です</div>';
+    else if (!status)         statusHTML = '<div class="snack-status hint-txt">まだ記録されていません</div>';
     else if (status==='ate')     statusHTML = '<div class="snack-status ate-txt">食べた</div>';
     else if (status==='skipped') statusHTML = '<div class="snack-status skip-txt">食べなかった</div>';
 
     const cardCls = locked ? 'snack-card locked' : status==='ate' ? 'snack-card ate' : status==='skipped' ? 'snack-card skipped' : 'snack-card';
-
     const btnsHTML = locked ? '' : `
       <div class="snack-btns">
         <button class="snack-btn snack-btn-yes ${status==='ate'?'chosen':''}"
@@ -1928,19 +2230,22 @@ function renderSnackGrid() {
 
 function recordSnack(nameId, status) {
   if (!hasTodayRecord(nameId)) return;
-  snacks[nameId] = status;
+  const today = todayStr();
+  if (!snacks[today]) snacks[today] = {};
+  snacks[today][nameId] = status;
   saveSnacks();
   const nm = members.find(n => n.id === nameId)?.name || '';
-  const txt = status === 'ate' ? '食べた' : '食べなかった';
-  showToast(`${nm} さん　おやつ：${txt}`, status === 'ate' ? '#16a34a' : '#dc2626');
+  showToast(`${nm} さん　おやつ：${status === 'ate' ? '食べた' : '食べなかった'}`,
+    status === 'ate' ? '#16a34a' : '#dc2626');
   renderSnackGrid();
 }
 
 function resetSnacks() {
-  snacks = {};
+  const today = todayStr();
+  delete snacks[today];
   saveSnacks();
   renderSnackGrid();
-  showToast('おやつ記録をリセットしました');
+  showToast('本日のおやつ記録をリセットしました');
 }
 function renderMemberList() {
   const list  = document.getElementById('memberList');
@@ -2162,31 +2467,41 @@ function resetCsvCols() {
 }
 
 // ---- CSV EXPORT ----
-function exportCSV() {
-  if (!records.length) { showToast('記録がありません', '#dc2626'); return; }
+function buildCSVContent(targetRecords) {
+  // Build column list — always include snack regardless of csvCols setting
   const enabled = csvCols.filter(c => c.enabled);
+  const cols = enabled.some(c => c.key === 'snack')
+    ? enabled
+    : (() => {
+        // Insert snack before timestamp if present, else append
+        const copy = [...enabled];
+        const tsIdx = copy.findIndex(c => c.key === 'timestamp');
+        const snackCol = { key:'snack', label:'おやつ' };
+        if (tsIdx >= 0) copy.splice(tsIdx, 0, snackCol);
+        else copy.push(snackCol);
+        return copy;
+      })();
 
-  // Helper: snack label from snacks store (keyed by nameId)
   function snackLabel(r) {
-    const s = snacks[r.nameId];
+    const s = getSnackForRecord(r);
     if (s === 'ate')     return '食べた';
     if (s === 'skipped') return '食べなかった';
     return '';
   }
 
-  // Helper: format value — numbers unquoted, text quoted (VBA/Excel friendly)
+  // Numbers unquoted (VBA/Excel reads as numeric), text double-quoted
   function cell(v, isNum) {
-    if (isNum) return String(v); // no quotes → Excel reads as number
+    if (isNum) return String(v);
     return '"' + String(v).replace(/"/g, '""') + '"';
   }
 
-  const header = enabled.map(c => cell(c.label, false)).join(',');
+  const header = cols.map(c => cell(c.label, false)).join(',');
 
-  const rows = records.map(r => {
-    return enabled.map(c => {
+  const rows = targetRecords.map(r =>
+    cols.map(c => {
       switch (c.key) {
         case 'name':        return cell(r.name || '', false);
-        case 'temp':        return cell(r.temp.toFixed(1), true);   // numeric, unquoted
+        case 'temp':        return cell(r.temp.toFixed(1), true);
         case 'status':      return cell(getStatus(r.temp), false);
         case 'displayTime': return cell(r.displayTime || '', false);
         case 'departTime':  return cell(r.departTime || '', false);
@@ -2194,20 +2509,36 @@ function exportCSV() {
         case 'timestamp':   return cell(r.timestamp || '', false);
         default:            return cell(r[c.key] || '', false);
       }
-    }).join(',');
-  });
+    }).join(',')
+  );
 
-  // BOM (UTF-8) so Excel opens Japanese correctly without import wizard
-  const csv = '\uFEFF' + [header, ...rows].join('\r\n'); // CRLF for Windows/Excel
+  return '\uFEFF' + [header, ...rows].join('\r\n');
+}
 
+function exportCSV() {
+  if (!records.length) { showToast('記録がありません', '#dc2626'); return; }
+  const csv = buildCSVContent(records);
   const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
+  triggerDownload(csv, `体温記録_全件_${date}.csv`);
+  showToast('CSVファイルを出力しました');
+}
+
+function exportCSVByDate(dateStr) {
+  const dayRecs = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr);
+  if (!dayRecs.length) { showToast('記録がありません', '#dc2626'); return; }
+  const csv = buildCSVContent(dayRecs);
+  const fname = `体温記録_${dateStr.replace(/\//g, '-')}.csv`;
+  triggerDownload(csv, fname);
+  showToast(`${dateStr} のCSVを出力しました`);
+}
+
+function triggerDownload(csv, filename) {
   const a = Object.assign(document.createElement('a'), {
-    href:     URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })),
-    download: `体温記録_${date}.csv`
+    href:     URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' })),
+    download: filename
   });
   a.click();
   URL.revokeObjectURL(a.href);
-  showToast('CSVファイルを出力しました');
 }
 
 // ---- TOAST ----
