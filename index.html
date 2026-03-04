@@ -2794,6 +2794,37 @@ function fixVh(){
 fixVh();
 window.addEventListener('resize', fixVh);
 window.addEventListener('orientationchange', () => setTimeout(fixVh, 300));
+
+// ---- FULLSCREEN ----
+function requestFullscreen() {
+  const el = document.documentElement;
+  const fn = el.requestFullscreen
+          || el.webkitRequestFullscreen
+          || el.mozRequestFullScreen
+          || el.msRequestFullscreen;
+  if (fn) fn.call(el).catch(() => {});
+}
+
+// iPad Chrome requires fullscreen to be called synchronously inside a user gesture.
+// We attach once to the first touchstart (earliest possible sync point).
+function onFirstTouch() {
+  requestFullscreen();
+  document.removeEventListener('touchstart', onFirstTouch);
+  document.removeEventListener('click', onFirstTouch);
+}
+document.addEventListener('touchstart', onFirstTouch, { passive: true });
+document.addEventListener('click',      onFirstTouch, { passive: true });
+
+// Re-enter fullscreen if user accidentally exits (Android swipe-up etc.)
+function onFsChange() {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (!isFs) {
+    document.addEventListener('touchstart', requestFullscreen, { once: true, passive: true });
+    document.addEventListener('click',      requestFullscreen, { once: true, passive: true });
+  }
+}
+document.addEventListener('fullscreenchange',       onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange);
 </script>
 </body>
 </html>
