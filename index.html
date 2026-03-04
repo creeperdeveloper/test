@@ -283,6 +283,24 @@
     font-weight:700;
   }
 
+  /* Member has recorded today's temperature */
+  .name-item.recorded{
+    color:#15803d;
+  }
+  .name-item.recorded::after{
+    content:'✓';
+    margin-left:auto;
+    font-size:13px;
+    color:#16a34a;
+    opacity:0.8;
+  }
+  .name-item.selected.recorded{
+    color:var(--accent);
+  }
+  .name-item.selected.recorded::after{
+    color:var(--accent);
+  }
+
   /* ===== INPUT PANEL ===== */
   .input-panel{
     display:flex;
@@ -409,6 +427,33 @@
     background:#94a3b8;
   }
 
+  /* Quick depart button shown below record button once today is recorded */
+  .depart-quick-btn{
+    padding:14px 56px;
+    background:transparent;
+    color:var(--warn);
+    border:2px solid var(--warn);
+    border-radius:100px;
+    font-size:16px;
+    font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+    letter-spacing:0.06em;
+    transition:all 0.2s;
+    -webkit-appearance:none;
+    min-height:52px;
+    min-width:200px;
+    display:none; /* shown via JS */
+  }
+  .depart-quick-btn:active{background:var(--warn-light);}
+  .depart-quick-btn.done{
+    opacity:0.5;cursor:default;
+    border-color:var(--text-light);color:var(--text-light);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .depart-quick-btn:not(.done):hover{background:var(--warn-light);}
+  }
+
   .temp-scroll-hint{
     font-size:11px;
     color:var(--text-light);
@@ -489,65 +534,135 @@
   /* ===== FULLSCREEN CLOCK ===== */
   #clockScreen{
     position:fixed;inset:0;
-    background:linear-gradient(160deg,#0a0f1e 0%,#0d1b3e 50%,#091528 100%);
+    /* Sky-blue gradient matching the reference image */
+    background:linear-gradient(160deg,#3a7bd5 0%,#5ba3e8 35%,#74baf0 60%,#4a90d9 100%);
     display:flex;flex-direction:column;
     align-items:center;justify-content:center;
     z-index:300;
     opacity:0;pointer-events:none;
-    transition:opacity 0.35s;
+    transition:opacity 0.4s;
+    overflow:hidden;
     padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
   }
   #clockScreen.open{opacity:1;pointer-events:all;}
 
-  .fc-date{
-    font-family:'Noto Sans JP',sans-serif;
-    font-size:clamp(14px,2.5vw,22px);
-    font-weight:300;
-    color:rgba(147,197,253,0.75);
-    letter-spacing:0.25em;
-    margin-bottom:16px;
-    text-transform:uppercase;
+  /* Ambient orb behind the clock panel */
+  .fc-orb{
+    position:absolute;
+    width:min(70vw,500px);
+    height:min(70vw,500px);
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,0.22) 0%,rgba(100,180,255,0.08) 60%,transparent 100%);
+    pointer-events:none;
   }
+
+  /* Customizable message — top-left */
+  .fc-message{
+    position:absolute;
+    top:max(48px, calc(36px + var(--safe-top)));
+    left:max(40px, calc(32px + var(--safe-left)));
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(16px,2.4vw,22px);
+    font-weight:700;
+    color:#fff;
+    text-shadow:0 2px 12px rgba(0,60,140,0.25);
+    line-height:1.45;
+    white-space:pre-line;
+  }
+
+  /* Glass panel holding the clock */
+  .fc-panel{
+    position:relative;
+    background:rgba(255,255,255,0.14);
+    border:1px solid rgba(255,255,255,0.32);
+    border-radius:24px;
+    padding:clamp(24px,4vw,40px) clamp(36px,7vw,72px);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    box-shadow:
+      0 8px 48px rgba(0,40,120,0.22),
+      0 2px 0 rgba(255,255,255,0.28) inset,
+      0 -1px 0 rgba(0,0,0,0.08) inset;
+    display:flex;flex-direction:column;align-items:center;
+    min-width:min(72vw,480px);
+  }
+
+  /* Segment-display-style time */
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
   .fc-time{
     font-family:'DM Mono',monospace;
-    font-size:clamp(72px,18vw,160px);
-    font-weight:300;
-    color:#fff;
-    letter-spacing:-0.02em;
+    font-size:clamp(80px,20vw,172px);
+    font-weight:400;
+    /* Glow-through digits like LCD segments */
+    color:#d0eeff;
+    text-shadow:
+      0 0 12px rgba(120,200,255,0.9),
+      0 0 32px rgba(80,160,255,0.6),
+      0 0 64px rgba(60,140,255,0.35);
+    letter-spacing:0.06em;
     line-height:1;
-    text-shadow:0 0 80px rgba(96,165,250,0.4), 0 0 160px rgba(96,165,250,0.15);
+    position:relative;
+  }
+
+  /* "Ghost" segments behind — like an LCD background */
+  .fc-time::before{
+    content:attr(data-ghost);
+    position:absolute;
+    inset:0;
+    color:rgba(80,140,200,0.18);
+    text-shadow:none;
+    pointer-events:none;
+  }
+
+  .fc-secs-row{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-top:10px;
   }
 
   .fc-secs{
     font-family:'DM Mono',monospace;
-    font-size:clamp(28px,6vw,56px);
-    font-weight:300;
-    color:rgba(147,197,253,0.6);
-    margin-top:8px;
-    letter-spacing:0.08em;
-  }
-
-  .fc-day{
-    font-family:'Noto Sans JP',sans-serif;
-    font-size:clamp(13px,2vw,18px);
+    font-size:clamp(22px,5vw,42px);
     font-weight:400;
-    color:rgba(147,197,253,0.5);
-    margin-top:24px;
+    color:rgba(180,230,255,0.85);
+    text-shadow:0 0 12px rgba(120,200,255,0.6);
     letter-spacing:0.12em;
   }
 
+  .fc-date-chip{
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(12px,1.8vw,16px);
+    font-weight:500;
+    color:rgba(200,235,255,0.8);
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.2);
+    border-radius:100px;
+    padding:5px 18px;
+    letter-spacing:0.08em;
+  }
+
+  .fc-day-label{
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(12px,1.6vw,15px);
+    color:rgba(200,235,255,0.65);
+    margin-top:16px;
+    letter-spacing:0.14em;
+  }
+
+  /* Back button — bottom-right */
   .fc-back-btn{
     position:fixed;
     bottom:calc(36px + var(--safe-bottom));
     right:calc(36px + var(--safe-right));
-    padding:14px 32px;
-    background:rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.18);
+    padding:13px 28px;
+    background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.3);
     border-radius:100px;
-    color:rgba(255,255,255,0.7);
-    font-size:15px;
-    font-weight:500;
+    color:rgba(255,255,255,0.85);
+    font-size:14px;
+    font-weight:600;
     font-family:'Noto Sans JP',sans-serif;
     cursor:pointer;
     letter-spacing:0.06em;
@@ -555,10 +670,12 @@
     -webkit-appearance:none;
     backdrop-filter:blur(8px);
     -webkit-backdrop-filter:blur(8px);
+    box-shadow:0 2px 12px rgba(0,40,120,0.2);
+    min-height:48px;
   }
-  .fc-back-btn:active{background:rgba(255,255,255,0.18);}
+  .fc-back-btn:active{background:rgba(255,255,255,0.28);}
   @media (hover:hover) and (pointer:fine){
-    .fc-back-btn:hover{background:rgba(255,255,255,0.14);color:#fff;}
+    .fc-back-btn:hover{background:rgba(255,255,255,0.24);color:#fff;}
   }
 
   /* ===== MODAL BASE ===== */
@@ -1228,6 +1345,9 @@
     <button class="submit-btn" id="submitBtn" onclick="recordData()" disabled>
       記録する
     </button>
+    <button class="depart-quick-btn" id="departQuickBtn" onclick="recordDepartQuick()">
+      帰宅を記録する
+    </button>
     <div class="submit-hint" id="submitHint">名前と体温を確認してからボタンを押してください</div>
   </div>
 </div>
@@ -1238,11 +1358,17 @@
 
 <!-- ===== FULLSCREEN CLOCK ===== -->
 <div id="clockScreen">
-  <div class="fc-date" id="fcDate"></div>
-  <div class="fc-time" id="fcTime">--:--</div>
-  <div class="fc-secs" id="fcSecs">--</div>
-  <div class="fc-day"  id="fcDay"></div>
-  <button class="fc-back-btn" onclick="closeClock()">← 入力画面へ戻る</button>
+  <div class="fc-orb"></div>
+  <div class="fc-message" id="fcMessage"></div>
+  <div class="fc-panel">
+    <div class="fc-time" id="fcTime" data-ghost="88:88">--:--</div>
+    <div class="fc-secs-row">
+      <div class="fc-secs" id="fcSecs">--</div>
+      <div class="fc-date-chip" id="fcDate"></div>
+    </div>
+    <div class="fc-day-label" id="fcDay"></div>
+  </div>
+  <button class="fc-back-btn" onclick="closeClock()">入力画面へ戻る</button>
 </div>
 
 <!-- ===== AUTH MODAL ===== -->
@@ -1474,6 +1600,10 @@
 // =====================================================
 // 体温閾値設定 — 数値を変えて判断基準を調整できます
 // =====================================================
+// ---- CUSTOMIZABLE CLOCK MESSAGE ----
+// Edit this text to change the message shown on the fullscreen clock
+const CLOCK_MESSAGE = 'Welcome to\nKiitos Base';
+
 const THRESHOLDS = {
   FEVER:      37.5,  // 発熱とみなす体温 (°C)
   HIGH_FEVER: 38.5,  // 高熱とみなす体温 (°C)
@@ -1639,28 +1769,31 @@ function clearPersistentLogin() {
 
 // ---- CLOCK ----
 const DAYS_JA = ['日','月','火','水','木','金','土'];
+
 function updateClock() {
   const now = new Date();
   const h  = String(now.getHours()).padStart(2,'0');
   const m  = String(now.getMinutes()).padStart(2,'0');
   const s  = String(now.getSeconds()).padStart(2,'0');
-  const hm = `${h}:${m}`;
-  const dateStr = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
-  const dayStr  = DAYS_JA[now.getDay()] + '曜日';
 
-  // Main screen clock
+  // Main screen mini-clock
   const bc = document.getElementById('bigClock');
   const bd = document.getElementById('bigDate');
-  if (bc) bc.textContent = `${hm}:${s}`;
-  if (bd) bd.textContent = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
+  if (bc) bc.textContent = `${h}:${m}:${s}`;
+  if (bd) bd.textContent = now.toLocaleDateString('ja-JP',
+    { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
 
-  // Fullscreen clock
+  // Fullscreen clock (update only when visible)
   const cs = document.getElementById('clockScreen');
   if (cs && cs.classList.contains('open')) {
-    document.getElementById('fcDate').textContent = dateStr;
-    document.getElementById('fcTime').textContent = hm;
+    const ft = document.getElementById('fcTime');
+    const hm = `${h}:${m}`;
+    ft.textContent = hm;
+    ft.setAttribute('data-ghost', hm.replace(/[0-9]/g, '8'));
     document.getElementById('fcSecs').textContent = s;
-    document.getElementById('fcDay').textContent  = dayStr;
+    document.getElementById('fcDate').textContent =
+      now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
+    document.getElementById('fcDay').textContent = DAYS_JA[now.getDay()] + '曜日';
   }
 }
 setInterval(updateClock, 1000);
@@ -1668,18 +1801,54 @@ updateClock();
 
 // ---- FULLSCREEN CLOCK ----
 function openClock() {
-  // Update immediately so no blank flash
   const now = new Date();
-  document.getElementById('fcDate').textContent = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
-  document.getElementById('fcTime').textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const hm = `${h}:${m}`;
+
+  // Set message
+  document.getElementById('fcMessage').textContent = CLOCK_MESSAGE;
+
+  const ft = document.getElementById('fcTime');
+  ft.textContent = hm;
+  ft.setAttribute('data-ghost', hm.replace(/[0-9]/g,'8'));
   document.getElementById('fcSecs').textContent = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('fcDay').textContent  = DAYS_JA[now.getDay()] + '曜日';
+  document.getElementById('fcDate').textContent =
+    now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' });
+  document.getElementById('fcDay').textContent = DAYS_JA[now.getDay()] + '曜日';
   document.getElementById('clockScreen').classList.add('open');
 }
 
 function closeClock() {
   document.getElementById('clockScreen').classList.remove('open');
+  resetIdleTimer(); // restart idle timer after returning
 }
+
+// ---- IDLE TIMER (1 min inactivity → clock screen) ----
+const IDLE_MS = 60_000; // 1 minute
+let idleTimer = null;
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  // Don't start timer if clock/admin already open
+  if (document.getElementById('clockScreen').classList.contains('open')) return;
+  if (document.getElementById('adminModal').classList.contains('open')) return;
+  idleTimer = setTimeout(() => {
+    // Only auto-open if no modal is open
+    if (!document.getElementById('adminModal').classList.contains('open')) {
+      openClock();
+    }
+  }, IDLE_MS);
+}
+
+// Reset on any user interaction on the main screen
+['touchstart','touchend','mousedown','keydown','wheel','click'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    // Ignore events inside the clock screen itself
+    resetIdleTimer();
+  }, { passive: true });
+});
+resetIdleTimer(); // start on load
 
 // ---- NAME LIST ----
 function getVisibleMembers() {
@@ -1703,10 +1872,15 @@ function renderNames() {
     </div>`;
     return;
   }
-  panel.innerHTML = visible.map(n => `
-    <div class="name-item ${selectedName?.id === n.id ? 'selected' : ''}"
-      onclick="selectName(${n.id})">${n.name}</div>
-  `).join('');
+  panel.innerHTML = visible.map(n => {
+    const isSelected = selectedName?.id === n.id;
+    const hasRec = hasTodayRecord(n.id);
+    const cls = [
+      isSelected ? 'selected' : '',
+      hasRec ? 'recorded' : ''
+    ].filter(Boolean).join(' ');
+    return `<div class="name-item ${cls}" onclick="selectName(${n.id})">${n.name}</div>`;
+  }).join('');
 }
 
 function selectName(id) {
@@ -1734,21 +1908,24 @@ function adjustTemp(delta) {
   updateSubmitBtn();
 }
 
+// Wheel: normalize deltaY so it's always exactly ±0.1°C per scroll notch
+// regardless of mouse/trackpad sensitivity
 document.getElementById('tempWrap').addEventListener('wheel', function(e) {
   e.preventDefault();
-  adjustTemp(e.deltaY < 0 ? 0.1 : -0.1);
+  adjustTemp(Math.sign(e.deltaY) * 0.1);
 }, { passive: false });
 
-// Also attach wheel directly to the input (catches events that land on it)
 document.getElementById('tempInput').addEventListener('wheel', function(e) {
   e.preventDefault();
-  adjustTemp(e.deltaY < 0 ? 0.1 : -0.1);
+  adjustTemp(Math.sign(e.deltaY) * 0.1);
 }, { passive: false });
 
-// Touch swipe on temp wrap OR input → adjust temp
+// Touch swipe: 25px of drag = 0.1°C (fine control, easy to micro-adjust)
 (function(){
   let startY = null;
   let startVal = null;
+
+  const PX_PER_STEP = 25; // px of swipe needed for 0.1°C change
 
   function onTouchStart(e) {
     startY   = e.touches[0].clientY;
@@ -1759,7 +1936,8 @@ document.getElementById('tempInput').addEventListener('wheel', function(e) {
     if (startY === null) return;
     e.preventDefault();
     const dy    = startY - e.touches[0].clientY; // up = positive = increase
-    const delta = Math.round(dy / 6) * 0.1;
+    // Continuous (no snap): divide raw px by PX_PER_STEP, then round to nearest 0.1
+    const delta = Math.round((dy / PX_PER_STEP) * 10) / 10;
     const inp   = document.getElementById('tempInput');
     let v = Math.round((startVal + delta) * 10) / 10;
     if (v < 34.0) v = 34.0;
@@ -1770,7 +1948,6 @@ document.getElementById('tempInput').addEventListener('wheel', function(e) {
 
   function onTouchEnd() { startY = null; startVal = null; }
 
-  // Attach to both wrap and input so dragging anywhere on the number works
   ['tempWrap', 'tempInput'].forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -1786,6 +1963,20 @@ function updateSubmitBtn() {
   document.getElementById('submitHint').textContent = ok
     ? selectedName.name + ' さん、' + v.toFixed(1) + '°C で記録します'
     : '名前と体温を確認してからボタンを押してください';
+
+  // Show depart quick button only when a member is selected AND has today's record
+  const dBtn = document.getElementById('departQuickBtn');
+  if (selectedName && hasTodayRecord(selectedName.id)) {
+    dBtn.style.display = 'block';
+    const alreadyDeparted = !!departures[selectedName.id];
+    dBtn.classList.toggle('done', alreadyDeparted);
+    dBtn.textContent = alreadyDeparted
+      ? '帰宅済み　' + departures[selectedName.id]
+      : '帰宅を記録する';
+    dBtn.onclick = alreadyDeparted ? null : recordDepartQuick;
+  } else {
+    dBtn.style.display = 'none';
+  }
 }
 updateSubmitBtn();
 
@@ -2164,6 +2355,13 @@ function recordDepart(nameId) {
   const nm = members.find(n => n.id === nameId)?.name || '';
   showToast(nm + ' さん　' + t + ' 帰宅', '#d97706');
   renderDepartGrid();
+}
+
+function recordDepartQuick() {
+  if (!selectedName) return;
+  recordDepart(selectedName.id);
+  updateSubmitBtn(); // refresh button state
+  renderNames();     // refresh green checkmarks
 }
 
 function resetDepartures() {
