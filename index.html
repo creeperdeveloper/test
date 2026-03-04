@@ -941,7 +941,12 @@
 
   /* DEPARTURE */
   .depart-grid{
-    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+    display:-webkit-grid;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    -webkit-align-items:stretch;
+    align-items:stretch;
+    gap:8px;
     flex:1;overflow-y:auto;margin-bottom:14px;min-height:0;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
@@ -974,14 +979,25 @@
 
   /* Snack cards — two-button variant */
   .snack-card{
+    display:-webkit-flex;
     display:flex;
+    -webkit-flex-direction:column;
     flex-direction:column;
+    -webkit-justify-content:space-between;
+    justify-content:space-between;
     padding:14px 14px 10px;
     background:#fff;
     border:1px solid var(--border);
     border-radius:var(--radius-sm);
     min-height:90px;
     gap:10px;
+    width:100%;
+    box-sizing:border-box;
+  }
+
+  .snack-card > div:first-child{
+    width:100%;
+    min-width:0;
   }
 
   .snack-card.locked{
@@ -1000,7 +1016,7 @@
     background:rgba(220,38,38,0.04);
   }
 
-  .snack-name{font-size:14px;font-weight:600;color:var(--text);}
+  .snack-name{font-size:14px;font-weight:600;color:var(--text);word-break:break-all;}
   .snack-status{font-size:12px;margin-top:2px;}
   .snack-status.ate-txt{color:#16a34a;font-weight:600;}
   .snack-status.skip-txt{color:#dc2626;font-weight:600;}
@@ -1008,11 +1024,17 @@
   .snack-status.locked-txt{color:var(--danger);opacity:0.8;}
 
   .snack-btns{
-    display:flex;gap:6px;
+    display:-webkit-flex;
+    display:flex;
+    gap:6px;
+    width:100%;
+    box-sizing:border-box;
   }
 
   .snack-btn{
+    -webkit-flex:1;
     flex:1;
+    min-width:0;
     padding:7px 4px;
     border-radius:var(--radius-xs);
     font-size:12px;
@@ -1023,6 +1045,7 @@
     transition:all 0.15s;
     -webkit-appearance:none;
     min-height:36px;
+    box-sizing:border-box;
   }
 
   .snack-btn-yes{
