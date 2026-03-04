@@ -944,8 +944,8 @@
     display:-webkit-grid;
     display:grid;
     grid-template-columns:1fr 1fr;
-    -webkit-align-items:stretch;
-    align-items:stretch;
+    -webkit-align-items:start;
+    align-items:start;
     gap:8px;
     flex:1;overflow-y:auto;margin-bottom:14px;min-height:0;
     -webkit-overflow-scrolling:touch;
@@ -977,27 +977,15 @@
   .depart-hint{font-size:12px;color:var(--text-light);margin-top:5px;}
   .depart-locked-msg{font-size:12px;color:var(--danger);margin-top:5px;opacity:0.8;}
 
-  /* Snack cards — two-button variant */
+  /* Snack cards — block layout (no flex-stretch issues on iPad Safari) */
   .snack-card{
-    display:-webkit-flex;
-    display:flex;
-    -webkit-flex-direction:column;
-    flex-direction:column;
-    -webkit-justify-content:space-between;
-    justify-content:space-between;
-    padding:14px 14px 10px;
+    display:block;
+    padding:12px 12px 10px;
     background:#fff;
     border:1px solid var(--border);
     border-radius:var(--radius-sm);
-    min-height:90px;
-    gap:10px;
-    width:100%;
     box-sizing:border-box;
-  }
-
-  .snack-card > div:first-child{
     width:100%;
-    min-width:0;
   }
 
   .snack-card.locked{
@@ -1005,37 +993,39 @@
     background:var(--surface2);
     border-style:dashed;
   }
-
   .snack-card.ate{
     border-color:#16a34a;
     background:rgba(22,163,74,0.05);
   }
-
   .snack-card.skipped{
     border-color:#dc2626;
     background:rgba(220,38,38,0.04);
   }
 
-  .snack-name{font-size:14px;font-weight:600;color:var(--text);word-break:break-all;}
-  .snack-status{font-size:12px;margin-top:2px;}
+  .snack-name{
+    font-size:14px;font-weight:600;color:var(--text);
+    margin-bottom:3px;
+    word-break:break-all;
+  }
+  .snack-status{font-size:12px;}
   .snack-status.ate-txt{color:#16a34a;font-weight:600;}
   .snack-status.skip-txt{color:#dc2626;font-weight:600;}
   .snack-status.hint-txt{color:var(--text-light);}
   .snack-status.locked-txt{color:var(--danger);opacity:0.8;}
 
   .snack-btns{
-    display:-webkit-flex;
-    display:flex;
-    gap:6px;
+    display:table;
     width:100%;
-    box-sizing:border-box;
+    border-collapse:separate;
+    border-spacing:6px 0;
+    margin-top:8px;
+    margin-left:-6px; /* cancel first border-spacing */
   }
 
   .snack-btn{
-    -webkit-flex:1;
-    flex:1;
-    min-width:0;
-    padding:7px 4px;
+    display:table-cell;
+    width:50%;
+    padding:8px 4px;
     border-radius:var(--radius-xs);
     font-size:12px;
     font-weight:700;
@@ -1044,7 +1034,7 @@
     border:1px solid;
     transition:all 0.15s;
     -webkit-appearance:none;
-    min-height:36px;
+    text-align:center;
     box-sizing:border-box;
   }
 
@@ -1053,25 +1043,21 @@
     border-color:rgba(22,163,74,0.3);
     color:#16a34a;
   }
-
   .snack-btn-yes.chosen{
     background:#16a34a;
     border-color:#16a34a;
     color:#fff;
   }
-
   .snack-btn-no{
     background:rgba(220,38,38,0.06);
     border-color:rgba(220,38,38,0.25);
     color:#dc2626;
   }
-
   .snack-btn-no.chosen{
     background:#dc2626;
     border-color:#dc2626;
     color:#fff;
   }
-
   @media (hover:hover) and (pointer:fine){
     .snack-btn-yes:hover:not(.chosen){background:rgba(22,163,74,0.15);}
     .snack-btn-no:hover:not(.chosen){background:rgba(220,38,38,0.12);}
