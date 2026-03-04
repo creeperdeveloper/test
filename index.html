@@ -904,6 +904,22 @@
   .icon-btn:active{background:var(--surface2);color:var(--text);}
   .icon-btn.del:active{background:var(--danger-light);color:var(--danger);border-color:var(--danger);}
 
+  /* Snack toggle buttons inside the records table */
+  .snack-tgl{
+    font-size:11px;font-weight:600;font-family:'Noto Sans JP',sans-serif;
+    padding:4px 8px;min-height:28px;
+    border-radius:var(--radius-xs);border:1px solid var(--border-light);
+    background:transparent;color:var(--text-light);
+    cursor:pointer;-webkit-appearance:none;transition:all 0.15s;white-space:nowrap;
+  }
+  .snack-tgl:active{opacity:0.75;}
+  .snack-tgl-ate{
+    background:#16a34a;border-color:#16a34a;color:#fff;
+  }
+  .snack-tgl-skip{
+    background:#dc2626;border-color:#dc2626;color:#fff;
+  }
+
   .action-bar{
     display:flex;align-items:center;justify-content:space-between;
     margin-bottom:12px;gap:10px;flex-wrap:wrap;
@@ -1404,7 +1420,6 @@
     <div class="admin-tabs">
       <button class="tab-btn active" onclick="switchTab('records')">記録履歴</button>
       <button class="tab-btn" onclick="switchTab('depart')">帰宅記録</button>
-      <button class="tab-btn" onclick="switchTab('snack')">おやつ記録</button>
       <button class="tab-btn" onclick="switchTab('members')">メンバー</button>
       <button class="tab-btn" onclick="switchTab('settings')">設定</button>
     </div>
@@ -1436,16 +1451,6 @@
       <div class="depart-grid" id="departGrid"></div>
       <button class="btn-secondary" style="width:100%;font-size:14px;flex-shrink:0"
         onclick="resetDepartures()">本日の帰宅記録をリセット</button>
-    </div>
-
-    <!-- SNACK -->
-    <div class="tab-content" id="tab-snack">
-      <div class="modal-sub" style="margin-top:-6px;margin-bottom:14px;flex-shrink:0">
-        タップでおやつの有無を記録します。本日の体温が記録されている方のみ記録できます
-      </div>
-      <div class="depart-grid" id="snackGrid"></div>
-      <button class="btn-secondary" style="width:100%;font-size:14px;margin-top:8px;flex-shrink:0"
-        onclick="resetSnacks()">本日のおやつ記録をリセット</button>
     </div>
 
     <!-- MEMBERS -->
@@ -2102,7 +2107,7 @@ function openAdminPanel() {
 }
 
 function switchTab(tab) {
-  const tabs = ['records','depart','snack','members','settings'];
+  const tabs = ['records','depart','members','settings'];
   document.querySelectorAll('.tab-btn').forEach((b,i) =>
     b.classList.toggle('active', tabs[i] === tab)
   );
@@ -2110,7 +2115,6 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'records')  { renderStats(); renderRecordsTable(); }
   if (tab === 'depart')   renderDepartGrid();
-  if (tab === 'snack')    renderSnackGrid();
   if (tab === 'members')  { renderMemberList(); renderVisibilityGrid(); }
   if (tab === 'settings') { renderCsvColSettings(); }
 }
@@ -2205,10 +2209,6 @@ function renderRecordsTable() {
     // Records for this date
     dayRecords.forEach(r => {
       const snackVal = getSnackForRecord(r);
-      const snackLabel = snackVal === 'ate' ? '食べた' : snackVal === 'skipped' ? '食べなかった' : '—';
-      const snackStyle = snackVal === 'ate' ? 'color:#16a34a;font-weight:600'
-        : snackVal === 'skipped' ? 'color:#dc2626;font-weight:600'
-        : 'color:var(--text-light)';
 
       const cells = headCols.map(h => {
         if (h.key === 'temp')
@@ -2216,7 +2216,6 @@ function renderRecordsTable() {
         if (h.key === 'status')
           return `<td><span class="badge ${getBadgeClass(r.temp)}">${getStatus(r.temp)}</span></td>`;
         if (h.key === 'displayTime') {
-          // Show only time part inside date group
           const t = r.displayTime ? r.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '') : '';
           return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${t}</td>`;
         }
@@ -2224,8 +2223,18 @@ function renderRecordsTable() {
           return `<td>${r.departTime
             ? `<span class="badge badge-home">${r.departTime}</span>`
             : '<span style="color:var(--text-light);font-size:12px">—</span>'}</td>`;
-        if (h.key === 'snack')
-          return `<td><span style="font-size:13px;${snackStyle}">${snackLabel}</span></td>`;
+        if (h.key === 'snack') {
+          const ateActive  = snackVal === 'ate';
+          const skipActive = snackVal === 'skipped';
+          return `<td>
+            <div style="display:flex;gap:4px">
+              <button class="snack-tgl${ateActive ? ' snack-tgl-ate' : ''}"
+                onclick="toggleSnackFromTable(${r.nameId},'ate','${new Date(r.timestamp).toLocaleDateString('ja-JP')}')">食べた</button>
+              <button class="snack-tgl${skipActive ? ' snack-tgl-skip' : ''}"
+                onclick="toggleSnackFromTable(${r.nameId},'skipped','${new Date(r.timestamp).toLocaleDateString('ja-JP')}')">食べなかった</button>
+            </div>
+          </td>`;
+        }
         return `<td style="font-weight:500">${r[h.key] || ''}</td>`;
       }).join('');
 
@@ -2435,7 +2444,18 @@ function renderSnackGrid() {
   }).join('');
 }
 
-function recordSnack(nameId, status) {
+function toggleSnackFromTable(nameId, status, dateStr) {
+  if (!snacks[dateStr]) snacks[dateStr] = {};
+  // タップ済みの同じボタンを押したらクリア（トグル）
+  if (snacks[dateStr][nameId] === status) {
+    delete snacks[dateStr][nameId];
+    if (Object.keys(snacks[dateStr]).length === 0) delete snacks[dateStr];
+  } else {
+    snacks[dateStr][nameId] = status;
+  }
+  saveSnacks();
+  renderRecordsTable(); // テーブルだけ再描画
+}
   if (!hasTodayRecord(nameId)) return;
   const today = todayStr();
   if (!snacks[today]) snacks[today] = {};
