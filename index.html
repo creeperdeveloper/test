@@ -347,7 +347,7 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:12px;
+    gap:10px;
   }
 
   .temp-label-text{
@@ -357,14 +357,20 @@
     font-weight:600;
   }
 
-  .temp-wrap{
+  /* Number + °C side by side */
+  .temp-display-row{
     display:flex;
     align-items:center;
     gap:8px;
+  }
+
+  .temp-wrap{
+    display:flex;
+    align-items:center;
     background:rgba(255,255,255,0.92);
     border:2px solid var(--border);
-    border-radius:22px;
-    padding:14px 28px;
+    border-radius:16px;
+    padding:10px 20px;
     transition:border-color 0.2s,box-shadow 0.2s;
     box-shadow:var(--shadow);
   }
@@ -372,6 +378,53 @@
   .temp-wrap:focus-within{
     border-color:var(--accent);
     box-shadow:0 0 0 4px rgba(37,99,235,0.1),var(--shadow);
+  }
+
+  .temp-unit{
+    font-family:'DM Mono',monospace;
+    font-size:32px;
+    color:var(--text-muted);
+    line-height:1;
+    user-select:none;
+  }
+
+  /* ▲ ▼ buttons centered below the number */
+  .temp-arrow-row{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+  }
+
+  .temp-arrow-btn{
+    width:90px;
+    height:52px;
+    background:rgba(255,255,255,0.88);
+    border:2px solid var(--border);
+    border-radius:14px;
+    font-size:17px;
+    color:var(--accent);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    box-shadow:var(--shadow);
+    transition:background 0.12s,transform 0.1s,border-color 0.12s;
+    -webkit-appearance:none;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+  }
+  .temp-arrow-label{
+    font-family:'DM Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    opacity:0.75;
+  }
+  .temp-arrow-btn:active{
+    background:rgba(37,99,235,0.10);
+    border-color:var(--accent);
+    transform:scale(0.93);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .temp-arrow-btn:hover{background:rgba(37,99,235,0.07);border-color:var(--accent);}
   }
 
   .temp-input{
@@ -391,13 +444,6 @@
 
   .temp-input::-webkit-inner-spin-button,
   .temp-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
-
-  .temp-unit{
-    font-family:'DM Mono',monospace;
-    font-size:26px;
-    color:var(--text-muted);
-    padding-top:8px;
-  }
 
   .submit-btn{
     padding:18px 70px;
@@ -452,13 +498,6 @@
   }
   @media (hover:hover) and (pointer:fine){
     .depart-quick-btn:not(.done):hover{background:var(--warn-light);}
-  }
-
-  .temp-scroll-hint{
-    font-size:11px;
-    color:var(--text-light);
-    letter-spacing:0.04em;
-    margin-top:-8px;
   }
 
   .submit-hint{
@@ -1355,15 +1394,30 @@
 
     <div class="temp-block">
       <div class="temp-label-text">体　温</div>
-      <div class="temp-wrap" id="tempWrap">
-        <input class="temp-input" type="number" id="tempInput"
-          value="36.0" step="0.1" min="34.0" max="42.0"
-          inputmode="decimal"
-          pattern="[0-9]*\.?[0-9]*"
-          autocomplete="off">
+      <div class="temp-display-row">
+        <div class="temp-wrap" id="tempWrap">
+          <input class="temp-input" type="number" id="tempInput"
+            value="36.0" step="0.1" min="34.0" max="42.0"
+            inputmode="decimal"
+            pattern="[0-9]*\.?[0-9]*"
+            autocomplete="off">
+        </div>
         <div class="temp-unit">°C</div>
       </div>
-      <div class="temp-scroll-hint">上下にスワイプ（またはスクロール）で体温を変更できます</div>
+      <div class="temp-arrow-row">
+        <button class="temp-arrow-btn"
+          ontouchstart="startTempRepeat(1)" ontouchend="stopTempRepeat()" ontouchcancel="stopTempRepeat()"
+          onmousedown="startTempRepeat(1)" onmouseup="stopTempRepeat()" onmouseleave="stopTempRepeat()"
+          aria-label="体温を上げる">
+          ▲<span class="temp-arrow-label" id="upStepLabel">+0.1</span>
+        </button>
+        <button class="temp-arrow-btn"
+          ontouchstart="startTempRepeat(-1)" ontouchend="stopTempRepeat()" ontouchcancel="stopTempRepeat()"
+          onmousedown="startTempRepeat(-1)" onmouseup="stopTempRepeat()" onmouseleave="stopTempRepeat()"
+          aria-label="体温を下げる">
+          ▼<span class="temp-arrow-label" id="downStepLabel">-0.1</span>
+        </button>
+      </div>
     </div>
 
     <button class="submit-btn" id="submitBtn" onclick="recordData()" disabled>
@@ -1483,6 +1537,33 @@
     <div class="tab-content" id="tab-settings">
 
       <div class="settings-row">
+        <div style="flex:1">
+          <div class="settings-row-label">体温ボタンのステップ幅</div>
+          <div class="settings-row-sub">▲ / ▼ ボタンを押したときの変化量（°C）</div>
+          <div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:12px;color:var(--text-muted);font-weight:600">▲ 上げる量</label>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="number" id="upStepInput" min="0.1" max="1.0" step="0.1"
+                  style="width:80px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:'DM Mono',monospace;text-align:center;-webkit-appearance:none;appearance:none;outline:none;"
+                  oninput="saveTempSteps()">
+                <span style="font-size:13px;color:var(--text-muted)">°C</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:12px;color:var(--text-muted);font-weight:600">▼ 下げる量</label>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="number" id="downStepInput" min="0.1" max="1.0" step="0.1"
+                  style="width:80px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:'DM Mono',monospace;text-align:center;-webkit-appearance:none;appearance:none;outline:none;"
+                  oninput="saveTempSteps()">
+                <span style="font-size:13px;color:var(--text-muted)">°C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-row">
         <div>
           <div class="settings-row-label">ログインパスワード</div>
           <div class="settings-row-sub">
@@ -1521,23 +1602,6 @@
         </div>
         <button class="small-btn btn-warn" onclick="clearPersistentLogin()"
           style="flex-shrink:0;align-self:center">省略を解除</button>
-      </div>
-
-      <div class="settings-row">
-        <div style="flex:1">
-          <div class="settings-row-label">体温スクロール感度</div>
-          <div class="settings-row-sub">スワイプで体温を調整する際の感度。右に動かすほど鈍感（ゆっくり変わる）になります</div>
-          <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-            <span style="font-size:12px;color:var(--text-light);white-space:nowrap">敏感</span>
-            <input type="range" id="scrollSensRange" min="8" max="80" step="1"
-              style="flex:1;accent-color:var(--accent);height:6px;cursor:pointer"
-              oninput="updateScrollSens(this.value)">
-            <span style="font-size:12px;color:var(--text-light);white-space:nowrap">鈍感</span>
-          </div>
-          <div style="text-align:center;margin-top:6px">
-            <span id="scrollSensLabel" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);font-weight:600"></span>
-          </div>
-        </div>
       </div>
 
       <div class="settings-row" style="flex-direction:column;align-items:flex-start">
@@ -1662,7 +1726,6 @@ const K = {
   kanaMode:   'hcKana5',
   hidden:     'hcHidden5',
   snacks:     'hcSnack5',
-  scrollSens: 'hcScrollSens5', // px per 0.1°C step (default 25)
 };
 
 let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
@@ -1676,7 +1739,6 @@ let csvCols      = JSON.parse(localStorage.getItem(K.csvCols) || 'null') || JSON
 let kanaMode     = localStorage.getItem(K.kanaMode) === 'true';
 // hiddenMembers: Set of member IDs to hide from main screen
 let hiddenMembers = new Set(JSON.parse(localStorage.getItem(K.hidden) || '[]'));
-let scrollSens   = parseInt(localStorage.getItem(K.scrollSens) || '25', 10); // px per 0.1°C
 let selectedName = null;
 
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
@@ -1940,50 +2002,50 @@ function adjustTemp(delta) {
   updateSubmitBtn();
 }
 
-// Wheel: normalize deltaY so it's always exactly ±0.1°C per scroll notch
-// regardless of mouse/trackpad sensitivity
-document.getElementById('tempWrap').addEventListener('wheel', function(e) {
-  e.preventDefault();
-  adjustTemp(Math.sign(e.deltaY) * 0.1);
-}, { passive: false });
+// ---- TEMP ARROW BUTTONS ----
+// Step sizes — loaded from localStorage, default 0.1
+let tempUpStep   = parseFloat(localStorage.getItem('hcUpStep5')   || '0.1');
+let tempDownStep = parseFloat(localStorage.getItem('hcDownStep5') || '0.1');
 
-document.getElementById('tempInput').addEventListener('wheel', function(e) {
-  e.preventDefault();
-  adjustTemp(Math.sign(e.deltaY) * 0.1);
-}, { passive: false });
-
-// Touch swipe: scrollSens px of drag = 0.1°C (adjustable in settings)
-(function(){
-  let startY = null;
-  let startVal = null;
-
-  function onTouchStart(e) {
-    startY   = e.touches[0].clientY;
-    startVal = parseFloat(document.getElementById('tempInput').value) || 36.0;
+function saveTempSteps() {
+  const u = parseFloat(document.getElementById('upStepInput').value);
+  const d = parseFloat(document.getElementById('downStepInput').value);
+  if (!isNaN(u) && u >= 0.1 && u <= 1.0) {
+    tempUpStep = Math.round(u * 10) / 10;
+    localStorage.setItem('hcUpStep5', tempUpStep);
   }
-
-  function onTouchMove(e) {
-    if (startY === null) return;
-    e.preventDefault();
-    const dy    = startY - e.touches[0].clientY;
-    const delta = Math.round((dy / scrollSens) * 10) / 10;
-    const inp   = document.getElementById('tempInput');
-    let v = Math.round((startVal + delta) * 10) / 10;
-    if (v < 34.0) v = 34.0;
-    if (v > 42.0) v = 42.0;
-    inp.value = v.toFixed(1);
-    updateSubmitBtn();
+  if (!isNaN(d) && d >= 0.1 && d <= 1.0) {
+    tempDownStep = Math.round(d * 10) / 10;
+    localStorage.setItem('hcDownStep5', tempDownStep);
   }
+  applyTempStepLabels();
+}
 
-  function onTouchEnd() { startY = null; startVal = null; }
+function applyTempStepLabels() {
+  const u = document.getElementById('upStepLabel');
+  const d = document.getElementById('downStepLabel');
+  if (u) u.textContent = '+' + tempUpStep.toFixed(1);
+  if (d) d.textContent = '-' + tempDownStep.toFixed(1);
+}
 
-  ['tempWrap', 'tempInput'].forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove',  onTouchMove,  { passive: false });
-    el.addEventListener('touchend',   onTouchEnd,   { passive: true });
-  });
-})();
+let _tempRepeatTimer = null;
+let _tempRepeatInterval = null;
+
+// direction: 1 = up, -1 = down
+function startTempRepeat(direction) {
+  const delta = direction > 0 ? tempUpStep : -tempDownStep;
+  adjustTemp(delta);
+  _tempRepeatTimer = setTimeout(() => {
+    _tempRepeatInterval = setInterval(() => adjustTemp(delta), 80);
+  }, 400);
+}
+
+function stopTempRepeat() {
+  clearTimeout(_tempRepeatTimer);
+  clearInterval(_tempRepeatInterval);
+  _tempRepeatTimer = null;
+  _tempRepeatInterval = null;
+}
 
 function updateSubmitBtn() {
   const v = parseFloat(document.getElementById('tempInput').value);
@@ -2008,6 +2070,7 @@ function updateSubmitBtn() {
   }
 }
 updateSubmitBtn();
+applyTempStepLabels();
 
 // ---- RECORD ----
 // ---- CUSTOM CONFIRM MODAL ----
@@ -2131,7 +2194,14 @@ function switchTab(tab) {
   if (tab === 'records')  { renderStats(); renderRecordsTable(); }
   if (tab === 'depart')   renderDepartGrid();
   if (tab === 'members')  { renderMemberList(); renderVisibilityGrid(); }
-  if (tab === 'settings') { renderCsvColSettings(); initScrollSensUI(); }
+  if (tab === 'settings') {
+    renderCsvColSettings();
+    // Init step inputs
+    const u = document.getElementById('upStepInput');
+    const d = document.getElementById('downStepInput');
+    if (u) u.value = tempUpStep.toFixed(1);
+    if (d) d.value = tempDownStep.toFixed(1);
+  }
 }
 
 // ---- STATS ----
@@ -2600,33 +2670,6 @@ function changeAdminPassword() {
 
 // ---- CSV COLS ----
 let dragSrc = null;
-
-function updateScrollSens(val) {
-  scrollSens = parseInt(val, 10);
-  localStorage.setItem(K.scrollSens, scrollSens);
-  const label = document.getElementById('scrollSensLabel');
-  if (label) {
-    // Show intuitive label: px value converted to "mm per 0.1°C" feel
-    const presets = [
-      [8,  '最高感度'],
-      [15, '高感度'],
-      [25, '標準'],
-      [40, '低感度'],
-      [60, '最低感度'],
-      [80, '超鈍感'],
-    ];
-    const closest = presets.reduce((a, b) => Math.abs(b[0] - scrollSens) < Math.abs(a[0] - scrollSens) ? b : a);
-    label.textContent = closest[1] + '　(' + scrollSens + 'px / 0.1°C)';
-  }
-}
-
-function initScrollSensUI() {
-  const range = document.getElementById('scrollSensRange');
-  if (range) {
-    range.value = scrollSens;
-    updateScrollSens(scrollSens);
-  }
-}
 
 function renderCsvColSettings() {
   document.getElementById('csvColList').innerHTML = csvCols.map((col, idx) => `
