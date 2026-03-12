@@ -1878,6 +1878,10 @@
             <div><div class="settings-row-label">出席管理</div><div class="settings-row-sub">出席・欠席・遅刻の確認と管理</div></div>
             <span class="settings-nav-chevron">›</span>
           </button>
+          <button class="settings-nav-row" onclick="exportBasicData()" style="color:var(--accent)">
+            <div><div class="settings-row-label" style="color:var(--accent)">基本データのエクスポート</div><div class="settings-row-sub">全メンバーの本日の体温・帰宅・おやつをCSV出力</div></div>
+            <span class="settings-nav-chevron" style="color:var(--accent)">↓</span>
+          </button>
         </div>
         <div class="settings-section-title" style="margin-top:20px">設定</div>
         <div class="settings-card">
@@ -2717,10 +2721,21 @@ function switchTab(tab) {
 function renderStats() {
   const fever     = records.filter(r => r.temp >= THRESHOLDS.FEVER && r.temp < THRESHOLDS.HIGH_FEVER).length;
   const highFever = records.filter(r => r.temp >= THRESHOLDS.HIGH_FEVER).length;
-  const avg       = records.length
-    ? (records.reduce((s,r) => s + r.temp, 0) / records.length).toFixed(1) : '--';
   const today     = todayStr();
   const todayCnt  = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === today).length;
+
+  // Per-member average temperature
+  const memberAvgs = members.map(mem => {
+    const memRecs = records.filter(r => r.memberId === mem.id || r.nameId === mem.id);
+    const avg = memRecs.length
+      ? (memRecs.reduce((s,r) => s + r.temp, 0) / memRecs.length).toFixed(1)
+      : null;
+    return { name: mem.name, avg };
+  }).filter(m => m.avg !== null);
+
+  const avgHtml = memberAvgs.length
+    ? memberAvgs.map(m => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:12px"><span style="color:var(--text-muted)">${m.name}</span><span style="font-family:'DM Mono',monospace;font-weight:600;color:var(--accent)">${m.avg}°C</span></div>`).join('')
+    : '<div style="color:var(--text-light);font-size:12px">記録なし</div>';
 
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card">
@@ -2735,9 +2750,9 @@ function renderStats() {
       <div class="stat-val" style="${highFever > 0 ? 'color:#7c2d12' : ''}">${highFever}</div>
       <div class="stat-label">高熱件数<br><span style="font-size:10px;color:var(--text-light)">${THRESHOLDS.HIGH_FEVER}°C以上</span></div>
     </div>
-    <div class="stat-card">
-      <div class="stat-val">${avg}</div>
-      <div class="stat-label">平均体温</div>
+    <div class="stat-card" style="grid-column:1/-1;align-items:flex-start;text-align:left">
+      <div class="stat-label" style="margin-bottom:8px;font-weight:700">メンバー別平均体温</div>
+      <div style="width:100%">${avgHtml}</div>
     </div>
   `;
 }
@@ -2760,27 +2775,23 @@ function renderRecordsTable() {
   const filtered = records.filter(r => !q || r.name.includes(q) || String(r.temp).includes(q));
   const tbody = document.getElementById('recordsTbody');
 
-  if (!filtered.length) {
+  // Collect all dates that have any records
+  const allDates = new Set(filtered.map(r => new Date(r.timestamp).toLocaleDateString('ja-JP')));
+  if (!allDates.size) {
     tbody.innerHTML = `<tr><td colspan="${headCols.length + 1}" style="text-align:center;color:var(--text-muted);padding:30px">記録がありません</td></tr>`;
     return;
   }
 
-  // Group by date string
-  const groups = {};
-  filtered.forEach(r => {
-    const d = new Date(r.timestamp).toLocaleDateString('ja-JP');
-    if (!groups[d]) groups[d] = [];
-    groups[d].push(r);
-  });
-
   // Sort dates descending
-  const sortedDates = Object.keys(groups).sort((a, b) =>
+  const sortedDates = [...allDates].sort((a, b) =>
     new Date(b.replace(/\//g,'-')) - new Date(a.replace(/\//g,'-'))
   );
 
+  const NA = '<span style="color:var(--text-light);font-size:11px;font-style:italic">データなし</span>';
+
   let html = '';
   sortedDates.forEach(dateStr => {
-    const dayRecords = groups[dateStr];
+    const dayRecords = filtered.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr);
     const colSpan = headCols.length + 1;
     const isToday = dateStr === todayStr();
 
@@ -2800,10 +2811,25 @@ function renderRecordsTable() {
       </td>
     </tr>`;
 
-    // Records for this date
-    dayRecords.forEach(r => {
-      const snackVal = getSnackForRecord(r);
+    // Show ALL members — with record or without
+    const recordedIds = new Set(dayRecords.map(r => r.memberId ?? r.nameId));
+    const allRowMembers = [
+      ...dayRecords,  // recorded members (may have multiple per day — show all)
+      ...members.filter(m => !recordedIds.has(m.id)).map(m => ({ _noRecord: true, memberId: m.id, name: m.name }))
+    ];
 
+    allRowMembers.forEach(r => {
+      if (r._noRecord) {
+        // Member with no record on this date
+        html += `<tr style="opacity:0.55">
+          <td style="font-weight:500">${r.name}</td>
+          <td>${NA}</td><td>${NA}</td><td>${NA}</td><td>${NA}</td><td>${NA}</td>
+          <td></td>
+        </tr>`;
+        return;
+      }
+
+      const snackVal = getSnackForRecord(r);
       const cells = headCols.map(h => {
         if (h.key === 'temp')
           return `<td class="temp-cell ${getTempClass(r.temp)}">${r.temp.toFixed(1)}°C</td>`;
@@ -2811,25 +2837,25 @@ function renderRecordsTable() {
           return `<td><span class="badge ${getBadgeClass(r.temp)}">${getStatus(r.temp)}</span></td>`;
         if (h.key === 'displayTime') {
           const t = r.displayTime ? r.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '') : '';
-          return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${t}</td>`;
+          return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${t || NA}</td>`;
         }
         if (h.key === 'departTime')
           return `<td>${r.departTime
             ? `<span class="badge badge-home">${r.departTime}</span>`
-            : '<span style="color:var(--text-light);font-size:12px">—</span>'}</td>`;
+            : NA}</td>`;
         if (h.key === 'snack') {
           const ateActive  = snackVal === 'ate';
           const skipActive = snackVal === 'skipped';
           return `<td>
             <div style="display:flex;gap:4px">
               <button class="snack-tgl${ateActive ? ' snack-tgl-ate' : ''}"
-                onclick="toggleSnackFromTable(${r.nameId},'ate','${new Date(r.timestamp).toLocaleDateString('ja-JP')}')">食べた</button>
+                onclick="toggleSnackFromTable(${r.nameId ?? r.memberId},'ate','${dateStr}')">食べた</button>
               <button class="snack-tgl${skipActive ? ' snack-tgl-skip' : ''}"
-                onclick="toggleSnackFromTable(${r.nameId},'skipped','${new Date(r.timestamp).toLocaleDateString('ja-JP')}')">食べなかった</button>
+                onclick="toggleSnackFromTable(${r.nameId ?? r.memberId},'skipped','${dateStr}')">食べなかった</button>
             </div>
           </td>`;
         }
-        return `<td style="font-weight:500">${r[h.key] || ''}</td>`;
+        return `<td style="font-weight:500">${r[h.key] || NA}</td>`;
       }).join('');
 
       html += `<tr>${cells}
@@ -3323,6 +3349,50 @@ function buildCSVContent(targetRecords) {
   );
 
   return '\uFEFF' + [header, ...rows].join('\r\n');
+}
+
+
+// =====================================================
+// BASIC DATA EXPORT (全メンバー × 日付, データなし for missing)
+// =====================================================
+function exportBasicData() {
+  // Export today by default; if no records at all, use today's date
+  const today = new Date().toLocaleDateString('ja-JP');
+  exportBasicDataByDate(today);
+}
+
+function exportBasicDataByDate(dateStr) {
+  const NA = 'データなし';
+  const header = ['"メンバー名"','"体温"','"記録時刻"','"帰宅時刻"','"おやつ"'].join(',');
+
+  const rows = members.map(mem => {
+    const rec = records.find(r =>
+      (r.memberId === mem.id || r.nameId === mem.id) &&
+      new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr
+    );
+    if (!rec) {
+      return [
+        `"${mem.name}"`, `"${NA}"`, `"${NA}"`, `"${NA}"`, `"${NA}"`
+      ].join(',');
+    }
+    const snackVal = getSnackForRecord(rec);
+    const snackStr = snackVal === 'ate' ? '食べた' : snackVal === 'skipped' ? '食べなかった' : NA;
+    const recTime = rec.displayTime
+      ? rec.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '')
+      : NA;
+    return [
+      `"${mem.name}"`,
+      rec.temp.toFixed(1),
+      `"${recTime}"`,
+      `"${rec.departTime || NA}"`,
+      `"${snackStr}"`
+    ].join(',');
+  });
+
+  const csv = '\uFEFF' + [header, ...rows].join('\r\n');
+  const fname = `基本データ_${dateStr.replace(/\//g,'-')}.csv`;
+  triggerDownload(csv, fname);
+  showToast(`${dateStr} の基本データをエクスポートしました`);
 }
 
 function exportCSV() {
