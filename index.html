@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
@@ -31,6 +31,7 @@
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
     --radius-sm: 8px;
     --radius-xs: 6px;
+    --surface: #ffffff;
     /* iPad Safe Area */
     --safe-top:    env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -64,7 +65,7 @@
     background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 60%,#0e2340 100%);
     display:flex;flex-direction:column;
     align-items:center;justify-content:center;
-    z-index:1000;
+    z-index:2000;
     transition:opacity 0.4s;
     padding-top:var(--safe-top);
     padding-bottom:var(--safe-bottom);
@@ -128,6 +129,10 @@
     transition:border-color 0.2s,background 0.2s;
     -webkit-appearance:none;
     min-height:64px;
+    touch-action:manipulation;
+    -webkit-user-select:text;
+    user-select:text;
+    cursor:text;
   }
 
   .lock-input::placeholder{color:rgba(255,255,255,0.2);}
@@ -410,24 +415,6 @@
   .submit-hint{font-size:12px;color:var(--text-light);text-align:center;}
 
   /* ===== ADMIN BTN ===== */
-  .admin-btn{
-    position:fixed;
-    bottom:calc(24px + var(--safe-bottom));
-    right:calc(24px + var(--safe-right));
-    width:52px;height:52px;
-    border-radius:50%;
-    background:rgba(255,255,255,0.92);
-    border:1px solid var(--border);
-    color:var(--text-muted);
-    font-size:20px;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:all 0.2s;
-    z-index:100;
-    box-shadow:var(--shadow);
-    -webkit-appearance:none;
-    font-family:'DM Mono',monospace;
-  }
 
   /* hover only on pointer devices (mouse), not touch */
   @media (hover:hover) and (pointer:fine){
@@ -530,8 +517,6 @@
   }
 
   /* Segment-display-style time */
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-
   .fc-time{
     font-family:'DM Mono',monospace;
     font-size:clamp(80px,20vw,172px);
@@ -627,7 +612,7 @@
     backdrop-filter:blur(6px);
     -webkit-backdrop-filter:blur(6px);
     display:flex;align-items:center;justify-content:center;
-    z-index:200;
+    z-index:1300;
     opacity:0;pointer-events:none;
     transition:opacity 0.22s;
     /* safe area padding so modal doesn't go under home bar */
@@ -1341,7 +1326,10 @@
   #pushContainer{
     position:fixed;top:calc(16px + var(--safe-top));right:16px;
     display:flex;flex-direction:column;gap:8px;z-index:9999;
-    pointer-events:none;max-width:320px;width:calc(100vw - 32px);
+    pointer-events:none;max-width:340px;width:calc(100vw - 32px);
+  }
+  #pushContainer > *{
+    pointer-events:all;
   }
   .push-card{
     background:#fff;border-radius:14px;
@@ -1418,38 +1406,14 @@
   .temp-arrow-btn:active{background:rgba(37,99,235,0.10);border-color:var(--accent);transform:scale(0.94);}
   @media (hover:hover) and (pointer:fine){.temp-arrow-btn:hover{background:rgba(37,99,235,0.07);border-color:var(--accent);}}
 
-  /* ===== GLOBAL SETTINGS BUTTON ===== */
-  .global-btn{
-    position:fixed;bottom:calc(24px + var(--safe-bottom));
-    right:calc(24px + var(--safe-right) + 128px);
-    width:52px;height:52px;border-radius:50%;
-    background:rgba(255,255,255,0.92);border:1px solid var(--border);
-    color:var(--text-muted);font-size:20px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:all 0.2s;z-index:100;box-shadow:var(--shadow);-webkit-appearance:none;
-  }
-  .global-btn:active{border-color:#7c3aed;color:#7c3aed;}
-  @media (hover:hover) and (pointer:fine){.global-btn:hover{border-color:#7c3aed;color:#7c3aed;}}
 
-  /* ===== FORBIDDEN WORD BUTTON (bottom-left) ===== */
-  .forbidden-btn{
-    position:fixed;bottom:calc(24px + var(--safe-bottom));
-    left:calc(24px + var(--safe-left));
-    width:52px;height:52px;border-radius:50%;
-    background:rgba(255,255,255,0.92);border:1px solid var(--border);
-    color:var(--text-muted);font-size:20px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:all 0.2s;z-index:100;box-shadow:var(--shadow);-webkit-appearance:none;
-  }
-  .forbidden-btn.listening{background:#fee2e2;border-color:#dc2626;color:#dc2626;animation:pulse 1s infinite;}
-  .forbidden-btn:active{border-color:#dc2626;color:#dc2626;}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0.4);}50%{box-shadow:0 0 0 8px rgba(220,38,38,0);}}
 
-  /* ===== SETTINGS FULL PAGE (solid background, slides in like a new screen) ===== */
+  /* ===== SETTINGS FULL PAGE (solid page, slides in from right) ===== */
   .xl-modal-overlay{
-    position:fixed;inset:0;background:var(--surface);
+    position:fixed;inset:0;
+    background:#f0f4f8;
     z-index:1200;display:flex;flex-direction:column;
-    opacity:1;pointer-events:none;
+    pointer-events:none;
     transition:transform 0.3s cubic-bezier(0.25,1,0.5,1);
     transform:translateX(100%);
   }
@@ -1463,7 +1427,7 @@
     flex-shrink:0;
     display:flex;align-items:center;justify-content:space-between;
     border-bottom:1px solid var(--border-light);
-    background:var(--surface);
+    background:#e8ecf2;
   }
   .xl-modal-title{font-size:20px;font-weight:700;color:var(--text);}
   .xl-modal-close{
@@ -1551,6 +1515,42 @@
   .att-absent{background:#fff5f5;color:#dc2626;font-weight:700;}
   .att-late{background:#fffbf0;color:#d97706;font-weight:700;}
   .att-unknown{color:var(--text-light);}
+
+  /* ===== BOTTOM FLOATING BUTTONS ===== */
+  .settings-open-btn{
+    position:fixed;bottom:28px;bottom:calc(28px + env(safe-area-inset-bottom,0px));
+    right:28px;right:calc(28px + env(safe-area-inset-right,0px));
+    height:48px;padding:0 24px;
+    border-radius:24px;border:none;
+    background:#2563eb;color:#ffffff;
+    font-size:15px;font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;letter-spacing:0.06em;
+    cursor:pointer;z-index:500;
+    box-shadow:0 4px 20px rgba(37,99,235,0.45);
+    -webkit-appearance:none;touch-action:manipulation;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .settings-open-btn:active{opacity:0.8;}
+
+  .clock-open-btn{
+    position:fixed;bottom:28px;bottom:calc(28px + env(safe-area-inset-bottom,0px));
+    left:28px;left:calc(28px + env(safe-area-inset-left,0px));
+    height:48px;padding:0 22px;
+    border-radius:24px;border:2px solid #d0dce8;
+    background:#ffffff;color:#64748b;
+    font-size:14px;font-weight:600;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;z-index:500;
+    box-shadow:0 2px 12px rgba(0,0,0,0.10);
+    -webkit-appearance:none;touch-action:manipulation;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .clock-open-btn:active{opacity:0.7;}
+
+  /* Today highlight in attendance */
+  .att-today{background:#fffbeb!important;font-weight:800;color:#b45309!important;}
+  .att-early{background:rgba(124,58,237,0.1);color:#6d28d9;font-weight:700;font-size:13px;cursor:pointer;}
+  .att-week-separator{border-left:2px solid var(--accent)!important;}
 </style>
 </head>
 <body>
@@ -1564,13 +1564,16 @@
     <div class="lock-label">パスワード</div>
     <input class="lock-input" type="password" id="lockInput"
       placeholder="- - - - - -"
-      autocomplete="off">
+      autocomplete="new-password"
+      inputmode="text"
+      onkeydown="if(event.key==='Enter')tryUnlock()"
+      ontouchend="this.focus()">
     <div class="lock-error" id="lockError"></div>
     <label class="lock-remember">
       <input type="checkbox" id="lockRemember" checked>
       次回からパスワード入力を省略する
     </label>
-    <button class="lock-btn" id="lockBtn">ログイン</button>
+    <button class="lock-btn" id="lockBtn" onclick="tryUnlock()" ontouchend="event.preventDefault();tryUnlock()">ログイン</button>
   </div>
 </div>
 
@@ -1625,6 +1628,7 @@
 </div>
 
 <div id="pushContainer"></div>
+<button class="clock-open-btn" onclick="openClock()" title="時計">時計</button>
 <button class="settings-open-btn" onclick="openGlobalSettings()">設定</button>
 <div class="toast" id="toast"></div>
 
@@ -1853,7 +1857,6 @@
       <button class="gs-tb"        data-tab="passwords"    onclick="switchGSTab('passwords')">パスワード</button>
       <button class="gs-tb"        data-tab="notifications"onclick="switchGSTab('notifications')">通知</button>
       <button class="gs-tb"        data-tab="reminders"    onclick="switchGSTab('reminders')">リマインダー</button>
-      <button class="gs-tb"        data-tab="forbidden"    onclick="switchGSTab('forbidden')">禁止ワード</button>
       <button class="gs-tb"        data-tab="attendance"   onclick="switchGSTab('attendance')">出席管理</button>
     </div>
 
@@ -1869,6 +1872,10 @@
           </button>
           <button class="settings-nav-row" onclick="openClockFromSettings()">
             <div><div class="settings-row-label">全画面時計を開く</div><div class="settings-row-sub">タップで全画面の時計モードへ切り替えます</div></div>
+            <span class="settings-nav-chevron">›</span>
+          </button>
+          <button class="settings-nav-row" onclick="switchGSTab('attendance')">
+            <div><div class="settings-row-label">出席管理</div><div class="settings-row-sub">出席・欠席・遅刻の確認と管理</div></div>
             <span class="settings-nav-chevron">›</span>
           </button>
         </div>
@@ -1890,14 +1897,8 @@
             <div><div class="settings-row-label">リマインダー</div><div class="settings-row-sub">指定時刻に通知を送信</div></div>
             <span class="settings-nav-chevron">›</span>
           </button>
-          <button class="settings-nav-row" onclick="switchGSTab('forbidden')">
-            <div><div class="settings-row-label">禁止ワード設定</div><div class="settings-row-sub">暴言・下ネタの自動検知とログ管理</div></div>
-            <span class="settings-nav-chevron">›</span>
-          </button>
-          <button class="settings-nav-row" onclick="switchGSTab('attendance')">
-            <div><div class="settings-row-label">出席管理</div><div class="settings-row-sub">出席・欠席・遅刻の確認と管理</div></div>
-            <span class="settings-nav-chevron">›</span>
-          </button>
+
+
         </div>
       </div>
 
@@ -1997,57 +1998,21 @@
         </div>
       </div>
 
-      <!-- 禁止ワード -->
-      <div class="gs-tab" id="gsTab-forbidden">
-        <div class="settings-section-title">禁止ワード設定</div>
-        <div class="settings-card" style="margin-bottom:14px">
-          <div class="settings-row">
-            <div><div class="settings-row-label">自動検知（音声認識）</div><div class="settings-row-sub">マイクで禁止ワードを自動検知します</div></div>
-            <label class="toggle-sw"><input type="checkbox" id="fwEnabledToggle" onchange="saveFWSettings()"><span class="toggle-sw-track"></span></label>
-          </div>
-          <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px">
-            <div><div class="settings-row-label">テキストで検知テスト</div><div class="settings-row-sub">音声認識が使えない環境でも動作確認できます</div></div>
-            <div style="display:flex;gap:8px;width:100%">
-              <input type="text" id="fwTestInput" class="pw-input" placeholder="テストしたいテキストを入力..." autocomplete="off" style="flex:1;font-size:14px"
-                onkeydown="if(event.key==='Enter')runFWTest()">
-              <button class="btn-primary" style="padding:10px 14px;font-size:14px;flex-shrink:0" onclick="runFWTest()">テスト</button>
-            </div>
-            <div id="fwTestResult" style="font-size:12px;color:var(--text-muted);display:none"></div>
-          </div>
-        </div>
-
-        <div class="settings-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-          登録済み禁止ワード
-          <div style="display:flex;gap:6px">
-            <button class="small-btn btn-add" onclick="openAddCustomWord()">＋ 追加</button>
-            <button id="fwRevealBtn"
-              style="border:1px solid var(--warn);color:var(--warn);background:transparent;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Noto Sans JP',sans-serif"
-              onclick="requestRevealAll()">パスワードで全表示</button>
-          </div>
-        </div>
-        <div class="settings-card" style="margin-bottom:14px">
-          <div style="padding:12px 14px">
-            <div id="fwWordCloud" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-          </div>
-        </div>
-
-        <div class="settings-section-title" style="display:flex;align-items:center;justify-content:space-between">
-          検知ログ
-          <button class="small-btn btn-del" style="font-size:11px;padding:4px 10px" onclick="clearFWLog()">クリア</button>
-        </div>
-        <div class="settings-card" style="overflow:hidden">
-          <div style="overflow-x:auto">
-            <table class="fw-log-table" id="fwLogTable">
-              <thead><tr><th>時刻</th><th>検知ワード</th><th>レベル</th></tr></thead>
-              <tbody id="fwLogTbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
       <!-- 出席管理 -->
       <div class="gs-tab" id="gsTab-attendance">
-        <div class="settings-section-title">出席管理</div>
+        <div class="settings-section-title">出席ルール設定</div>
+        <div class="settings-card" style="margin-bottom:14px">
+          <div class="settings-row">
+            <div><div class="settings-row-label">遅刻判定時刻</div><div class="settings-row-sub">この時刻を過ぎて記録した場合は遅刻扱い</div></div>
+            <input type="time" id="attLateCutoffInput" class="modal-input" style="width:120px;font-family:'DM Mono',monospace;font-size:14px" onchange="saveAttCutoff()">
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">早退判定時刻</div><div class="settings-row-sub">この時刻より前に帰宅記録があると早退扱い</div></div>
+            <input type="time" id="attEarlyCutoffInput" class="modal-input" style="width:120px;font-family:'DM Mono',monospace;font-size:14px" onchange="saveAttCutoff()">
+          </div>
+        </div>
+        <div class="settings-section-title" style="margin-top:16px">出席管理</div>
         <div class="settings-card" style="margin-bottom:14px">
           <div class="settings-row">
             <div><div class="settings-row-label">表示月</div></div>
@@ -2111,29 +2076,6 @@
     </div>
   </div>
 </div>
-
-<!-- ===== CUSTOM WORD ADD MODAL ===== -->
-<div class="modal-overlay" id="customWordModal">
-  <div class="modal" style="max-width:380px">
-    <div class="modal-h">禁止ワードを追加</div>
-    <div class="modal-sub">追加したいワードを入力してください</div>
-    <div class="edit-field">
-      <label>禁止ワード</label>
-      <input class="modal-input" type="text" id="customWordInput" placeholder="例: 禁止したいワード" autocomplete="off"
-        onkeydown="if(event.key==='Enter')saveCustomWord()">
-    </div>
-    <div class="edit-field" style="margin-top:10px">
-      <label>検知レベル</label>
-      <select class="modal-input" id="customWordLevel" style="cursor:pointer">
-        <option value="urgent">確定（すぐに緊急通知を送る）</option>
-        <option value="warn">疑わしい（注意通知を送る）</option>
-      </select>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-secondary" onclick="closeModal('customWordModal')">キャンセル</button>
-      <button class="btn-primary" onclick="saveCustomWord()">追加する</button>
-    </div>
-  </div>
 </div>
 
 
@@ -2169,27 +2111,6 @@
     </div>
   </div>
 </div>
-
-<!-- ===== CUSTOM WORD EDIT MODAL ===== -->
-<div class="modal-overlay" id="customWordModal">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-h">カスタム禁止ワード</div>
-    <div class="edit-field">
-      <label>禁止ワード</label>
-      <input class="modal-input" type="text" id="customWordInput" placeholder="例: 禁止したいワード" autocomplete="off">
-    </div>
-    <div class="edit-field" style="margin-top:10px">
-      <label>レベル</label>
-      <select class="modal-input" id="customWordLevel" style="cursor:pointer">
-        <option value="urgent">確定（即時緊急通知）</option>
-        <option value="warn">疑わしい（注意通知）</option>
-      </select>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-secondary" onclick="closeModal('customWordModal')">キャンセル</button>
-      <button class="btn-primary" onclick="saveCustomWord()">追加</button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -2232,10 +2153,8 @@ const K = {
   holdDelay:  'hcHoldDelay5',
   notifCfg:   'hcNotifCfg5',
   reminders:  'hcReminders5',
-  fwSettings: 'hcFWSettings5',
-  fwCustom:   'hcFWCustom5',
-  fwLog:      'hcFWLog5',
   attendance: 'hcAttendance5',
+  attCfg:     'hcAttCfg5',
   clockCfg:   'hcClockCfg5',
 };
 
@@ -2258,20 +2177,16 @@ let tempSteps    = JSON.parse(localStorage.getItem(K.tempSteps) || 'null') || _d
 let holdDelay    = parseFloat(localStorage.getItem(K.holdDelay) || '0.8'); // seconds
 let notifCfg     = JSON.parse(localStorage.getItem(K.notifCfg)  || 'null') || {duration:4, sound:true};
 let reminders    = JSON.parse(localStorage.getItem(K.reminders) || '[]');
-let fwSettings   = JSON.parse(localStorage.getItem(K.fwSettings)|| 'null') || {enabled:true};
-let fwCustom     = JSON.parse(localStorage.getItem(K.fwCustom)  || '[]');
-let fwLog        = JSON.parse(localStorage.getItem(K.fwLog)     || '[]');
 let attendance   = JSON.parse(localStorage.getItem(K.attendance)|| '{}'); // {'YYYY/M/D':{'memberId':'present'|'absent'|'late'}}
 let attViewMonth = new Date();
+let attCfg = JSON.parse(localStorage.getItem('hcAttCfg5')||'null') || {lateCutoff:'09:00',earlyCutoff:'15:00'};
+const saveAttCfg = () => localStorage.setItem('hcAttCfg5', JSON.stringify(attCfg));
 let clockCfg     = JSON.parse(localStorage.getItem(K.clockCfg) || 'null') || {msg:'Welcome to\nKiitos Base', fmt:'24', style:'digital', secs:true};
 const saveClockCfg = () => localStorage.setItem(K.clockCfg, JSON.stringify(clockCfg));
 const saveTS      = () => localStorage.setItem(K.tempSteps,  JSON.stringify(tempSteps));
 const saveHD      = () => localStorage.setItem(K.holdDelay,  holdDelay);
 const saveNC      = () => localStorage.setItem(K.notifCfg,   JSON.stringify(notifCfg));
 const saveReminders=() => localStorage.setItem(K.reminders,  JSON.stringify(reminders));
-const saveFWS     = () => localStorage.setItem(K.fwSettings, JSON.stringify(fwSettings));
-const saveFWC     = () => localStorage.setItem(K.fwCustom,   JSON.stringify(fwCustom));
-const saveFWL     = () => localStorage.setItem(K.fwLog,      JSON.stringify(fwLog));
 const saveAtt     = () => localStorage.setItem(K.attendance, JSON.stringify(attendance));
 
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
@@ -2355,8 +2270,13 @@ function checkSession() {
     hideLock();
     return;
   }
-  // ロック画面を表示したまま
+  // ロック画面を表示したまま — lockInput にフォーカス
+  setTimeout(() => {
+    const inp = document.getElementById('lockInput');
+    if (inp) inp.focus();
+  }, 300);
 }
+checkSession();
 
 function hideLock() {
   document.getElementById('lockScreen').classList.add('hidden');
@@ -2445,6 +2365,8 @@ updateClock();
 
 // ---- FULLSCREEN CLOCK ----
 function openClock() {
+  document.querySelector('.settings-open-btn').style.display='none';
+  document.querySelector('.clock-open-btn').style.display='none';
   const now = new Date();
   document.getElementById('fcMessage').textContent = clockCfg.msg || '';
 
@@ -2526,6 +2448,8 @@ function previewClock() {
 
 function closeClock() {
   document.getElementById('clockScreen').classList.remove('open');
+  document.querySelector('.settings-open-btn').style.display='';
+  document.querySelector('.clock-open-btn').style.display='';
   resetIdleTimer(); // restart idle timer after returning
 }
 
@@ -2535,12 +2459,15 @@ let idleTimer = null;
 
 function resetIdleTimer() {
   clearTimeout(idleTimer);
+  // Don't start timer if lock screen is showing
+  if (!document.getElementById('lockScreen').classList.contains('hidden')) return;
   // Don't start timer if clock/admin already open
   if (document.getElementById('clockScreen').classList.contains('open')) return;
   if (document.getElementById('adminModal').classList.contains('open')) return;
   idleTimer = setTimeout(() => {
-    // Only auto-open if no modal is open
-    if (!document.getElementById('adminModal').classList.contains('open')) {
+    // Only auto-open if no modal is open and lock screen is not showing
+    if (!document.getElementById('adminModal').classList.contains('open') &&
+        document.getElementById('lockScreen').classList.contains('hidden')) {
       openClock();
     }
   }, IDLE_MS);
@@ -2741,6 +2668,8 @@ function closeModal(id) {
   // Release body lock when admin panel closes
   if (id === 'adminModal') {
     document.body.classList.remove('modal-open');
+    document.querySelector('.settings-open-btn').style.display='';
+    document.querySelector('.clock-open-btn').style.display='';
   }
 }
 
@@ -2761,6 +2690,8 @@ function openAdminPanel() {
   // Lock body position — prevents iPad Safari from misreporting touch coordinates
   // on fixed-position overlays due to viewport/scroll offset mismatch
   document.body.classList.add('modal-open');
+  document.querySelector('.settings-open-btn').style.display='none';
+  document.querySelector('.clock-open-btn').style.display='none';
   switchTab('records');
   document.getElementById('adminModal').classList.add('open');
 }
@@ -3467,40 +3398,65 @@ function dismissPush(closeBtn) {
 
 // Persistent password push — doesn't auto-close
 function showPasswordPush(promptTitle, onSuccess, onCancel) {
+  // Prevent duplicate overlays
+  if (document.getElementById('pwPushOverlay')) return;
+  // Use a centered overlay for reliable iOS input handling
+  const overlay = document.createElement('div');
+  overlay.id = 'pwPushOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);';
+  
   const card = document.createElement('div');
-  card.className = 'push-card push-pw';
+  card.style.cssText = 'background:#fff;border-radius:20px;padding:24px;width:min(360px,calc(100vw - 48px));box-shadow:0 20px 60px rgba(0,0,0,0.3);border-top:4px solid #7c3aed;';
   card.innerHTML = `
-    <div class="push-body" style="flex:1">
-      <div class="push-title">${promptTitle}</div>
-      <div class="push-msg">パスワードを入力して確認してください</div>
-      <div class="push-pw-row">
-        <input type="password" class="push-pw-input" placeholder="パスワード" autocomplete="off">
-        <button class="push-pw-ok">確認</button>
-      </div>
-      <div class="push-pw-err">パスワードが違います</div>
-    </div>
-    <div class="push-close">✕</div>`;
-  document.getElementById('pushContainer').prepend(card);
-  const inp    = card.querySelector('.push-pw-input');
-  const okBtn  = card.querySelector('.push-pw-ok');
-  const errEl  = card.querySelector('.push-pw-err');
-  const closeX = card.querySelector('.push-close');
-  setTimeout(() => inp.focus(), 80);
+    <div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px">${promptTitle}</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px">管理者パスワードを入力してください</div>
+    <input type="password" id="pwPushInput" autocomplete="off"
+      style="width:100%;padding:12px 14px;border:2px solid #e4edf5;border-radius:12px;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;background:#fff;color:#1e293b;"
+      placeholder="パスワード">
+    <div id="pwPushErr" style="font-size:12px;color:#dc2626;margin-top:6px;display:none">パスワードが違います</div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button id="pwPushCancel" style="flex:1;padding:12px;border:1px solid #e4edf5;border-radius:12px;background:#f8fafc;font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;color:#64748b">キャンセル</button>
+      <button id="pwPushOk" style="flex:2;padding:12px;border:none;border-radius:12px;background:#7c3aed;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;">確認</button>
+    </div>`;
+  
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  
+  const inp    = card.querySelector('#pwPushInput');
+  const okBtn  = card.querySelector('#pwPushOk');
+  const errEl  = card.querySelector('#pwPushErr');
+  const cancel = card.querySelector('#pwPushCancel');
+  
+  // Focus after a short delay for iOS
+  setTimeout(() => { inp.focus(); inp.select(); }, 100);
+  
+  // Highlight input on focus
+  inp.addEventListener('focus', () => { inp.style.borderColor = '#7c3aed'; });
+  inp.addEventListener('blur',  () => { inp.style.borderColor = '#e4edf5'; });
+  
   function attempt() {
     const v = inp.value;
     if (v === lockPw || v === adminPw) {
-      card.remove();
+      document.body.removeChild(overlay);
       if (onSuccess) onSuccess();
     } else {
       errEl.style.display = 'block';
       inp.value = '';
-      inp.focus();
-      setTimeout(() => { errEl.style.display = 'none'; }, 2000);
+      inp.style.borderColor = '#dc2626';
+      setTimeout(() => { inp.focus(); }, 50);
+      setTimeout(() => { errEl.style.display = 'none'; inp.style.borderColor = '#e4edf5'; }, 2500);
     }
   }
   okBtn.addEventListener('click', attempt);
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
-  closeX.addEventListener('click', () => { card.remove(); if (onCancel) onCancel(); });
+  cancel.addEventListener('click', () => {
+    document.body.removeChild(overlay);
+    if (onCancel) onCancel();
+  });
+  // Tap outside to cancel
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) { document.body.removeChild(overlay); if (onCancel) onCancel(); }
+  });
 }
 
 function playBeep(times) {
@@ -3540,7 +3496,7 @@ function closeXlModal(id) {
 }
 
 let _currentGSTab = 'menu';
-const GS_TABS = ['menu','tempmanage','clock','passwords','notifications','reminders','forbidden','attendance'];
+const GS_TABS = ['menu','tempmanage','clock','passwords','notifications','reminders','attendance'];
 
 function switchGSTab(tab) {
   _currentGSTab = tab;
@@ -3557,8 +3513,7 @@ function switchGSTab(tab) {
   // Init per-tab
   if (tab === 'notifications') initNotifPage();
   if (tab === 'reminders')     renderReminderList();
-  if (tab === 'forbidden')     renderForbiddenPage();
-  if (tab === 'attendance')    renderAttendancePage();
+  if (tab === 'attendance')    { renderAttendancePage(); initAttCutoffInputs(); }
   if (tab === 'tempmanage')    renderTempManageTab();
   if (tab === 'clock')         initClockSettings();
 }
@@ -3886,297 +3841,129 @@ setInterval(() => {
   });
 }, 1000);
 
-// =====================================================
-// FORBIDDEN WORD SYSTEM
-// =====================================================
-// Word lists stored as split Base64 segments — decoded only at runtime when needed.
-// Each list is split into 3 chunks, each chunk split into 2 halves.
-// Variable names are deliberately opaque.
-const _wu_Ap='WyLjgbDjgYsiLCLjg5DjgqsiLCLppqzpub8iLCLjgqLjg5siLCLjgYLjgbsiLCLmrbvjga0iLCLjgZfjga0iLC',_wu_As='LmrrrjgZkiLCLjgZPjgo3jgZkiLCLjgbbjgaHmrrrjgZkiLCLjgq/jgroiLCLjgY/jgZoiLCLjgrTjg58iXQ==';
-const _wu_Bp='WyLjgZTjgb8iLCLmtojjgYjjgo0iLCLjgY3jgYjjgo0iLCLjgYbjgZvjgo0iLCLjgrXjgqTjg4bjg7wiLCLmnIDkvY4iLCLjgY3jgoLjgYQi',_wu_Bs='LCLjgq3jg6LjgYQiLCLjgq3jg6LjgqQiLCLjgYbjgZbjgYQiLCLjgqbjgrbjgYQiLCLjgqbjgrbjgqQiLCLoqr/lrZDkuZfjgovjgaoiXQ==';
-const _wu_Cp='WyLjgbXjgZbjgZHjgpPjgaoiLCLjgaDjgb7jgowiLCLpu5njgowiLCLjgYbjgovjgZXjgYQiLCLjgYbjgovjgZvjg7wiLCLmrbvjga3jgogiLC',_wu_Cs='LmtojjgYjjgo3jgogiLCLjgYbjgZvjgo3jgogiLCLjgbbjgaPmrrrjgZkiLCLmrrrjgZfjgabjgoTjgosiLCLjgbbjgaPjgajjgbDjgZkiXQ==';
-const _ws_Ap='WyLjgqjjg4Pjg4EiLCLjgYjjgaPjgaEiLCLjgrvjg4Pjgq/jgrkiLCLjgaHjgpPj',_ws_As='gaHjgpMiLCLjgYrjgaPjgbHjgYQiLCLjgb7jgpPjgZMiLCLjgaHjgY/jgbMiXQ==';
-const _ws_Bp='WyLjgqjjg60iLCLjgYjjgo0iLCLjgrnjgrHjg5kiLCLjgZnjgZHj',_ws_Bs='gbkiLCLlpInmhYsiLCLjgbjjgpPjgZ/jgYQiLCLjg63jg6oiXQ==';
-const _ws_Cp='WyLjgaHjgpPjgb0iLCLjgb7jgpPjgaHjgpMiLCLjgYrjgaHjgpPjgaHjgp',_ws_Cs='MiLCLjgqrjg4rjg4vjg7wiLCLjg5Xjgqfjg6kiLCLjgq/jg7Pjg4siXQ==';
-const _ww_Ap='WyLjgoDjgYvjgaTjgY8iLCLjg6DjgqvjgaTjgY8iLCLjg6Djgqvjg4Tjgq8iLCLohbnnq4vjgaQiLCLjga/jgonjgZ/jgaQi',_ww_As='LCLjgYTjgonjgaTjgY8iLCLjgqTjg6njgaTjgY8iLCLjgY3jgoLjgYHjgo/jgovjgYQiLCLmsJfmjIHjgaHmgqrjgYQiXQ==';
-const _ww_Bp='WyLjgYLjgorjgYjjgarjgYQiLCLjgYLjgorlvpfjgarjgYQiLCLjganjgqLjg5siLCLjgYbjgovjgZvjgYgiLCLjgarjgoHj',_ww_Bs='gpPjgaoiLCLjgarjgoHjgovjgaoiLCLlvbnnq4vjgZ/jgZoiLCLjganjgYbjgZsiLCLjganjgYbjgafjgoLjgYTjgYQiXQ==';
-const _ww_Cp='WyLjgYbjgaPjgajjgYbjgZfjgYQiLCLjgqbjgrbjgqQiLCLjgZfjgonjgZEiLCLjgZfj',_ww_Cs='gonjgZHjgosiLCLjgYbjgpPjgZbjgooiLCLmnIDmgqoiLCLjgrXjgqTjg4bjgqQiXQ==';
 
-function _d(a,b){try{return JSON.parse(atob(a+b));}catch(e){return[];}}
-function loadFWBuiltins() {
-  const stored = {
-    urgent: JSON.parse(localStorage.getItem('hcFWUrgent5')||'null'),
-    warn:   JSON.parse(localStorage.getItem('hcFWWarn5')  ||'null'),
-    sexual: JSON.parse(localStorage.getItem('hcFWSexual5')||'null'),
-  };
-  return {
-    urgent: stored.urgent || [..._d(_wu_Ap,_wu_As),..._d(_wu_Bp,_wu_Bs),..._d(_wu_Cp,_wu_Cs)],
-    sexual: stored.sexual || [..._d(_ws_Ap,_ws_As),..._d(_ws_Bp,_ws_Bs),..._d(_ws_Cp,_ws_Cs)],
-    warn:   stored.warn   || [..._d(_ww_Ap,_ww_As),..._d(_ww_Bp,_ww_Bs),..._d(_ww_Cp,_ww_Cs)],
-  };
-}
-function saveFWBuiltins(lists) {
-  localStorage.setItem('hcFWUrgent5', JSON.stringify(lists.urgent));
-  localStorage.setItem('hcFWWarn5',   JSON.stringify(lists.warn));
-  localStorage.setItem('hcFWSexual5', JSON.stringify(lists.sexual));
-}
-
-let _fwRevealed = false;  // true after password entered
-
-let _recognition = null;
-let _isListening = false;
-
-function openForbiddenPanel() {
-  showPasswordPush('禁止ワード管理', () => {
-    switchGSTab('forbidden');
-    document.getElementById('globalSettingsModal').classList.add('open');
-    document.body.classList.add('modal-open');
-  });
-}
-
-function saveFWSettings() {
-  fwSettings.enabled = document.getElementById('fwEnabledToggle').checked;
-  saveFWS();
-  if (!fwSettings.enabled && _isListening) stopListening();
-  if (fwSettings.enabled  && !_isListening) startListening();
-}
-
-// ── render forbidden page ──
-function renderForbiddenPage() {
-  document.getElementById('fwEnabledToggle').checked = fwSettings.enabled;
-  _fwRevealed = false;
-  renderFWWordCloud();
-  renderFWLog();
-}
-
-function renderFWWordCloud() {
-  const lists = loadFWBuiltins();
-  const allWords = [
-    ...lists.urgent.map(w => ({w, level:'urgent'})),
-    ...lists.sexual.map(w => ({w, level:'urgent'})),
-    ...lists.warn.map(w   => ({w, level:'warn'})),
-    ...fwCustom.map(w     => ({w: w.word, level: w.level, custom: true, idx: fwCustom.indexOf(w)})),
-  ];
-  const cloud = document.getElementById('fwWordCloud');
-  if (!allWords.length) {
-    cloud.innerHTML = '<span style="color:var(--text-light);font-size:13px">登録されているワードはありません</span>';
-    return;
-  }
-  cloud.innerHTML = allWords.map((item, i) => {
-    const revClass = _fwRevealed ? ' revealed' : '';
-    const delBtn = item.custom
-      ? `<button class="fw-chip-del" onclick="deleteCustomWord(${item.idx})" title="削除">✕</button>`
-      : `<button class="fw-chip-del" onclick="deleteBuiltinWord('${item.w}','${item.level}')" title="削除">✕</button>`;
-    return `<span class="fw-chip ${item.level}${revClass}" data-word="${item.w}">${item.w}${delBtn}</span>`;
-  }).join('');
-  // Update reveal button text
-  const btn = document.getElementById('fwRevealBtn');
-  if (btn) btn.textContent = _fwRevealed ? '再び隠す' : 'パスワードで全表示';
-}
-
-function requestRevealAll() {
-  if (_fwRevealed) {
-    _fwRevealed = false;
-    document.querySelectorAll('.fw-chip').forEach(c => c.classList.remove('revealed'));
-    document.getElementById('fwRevealBtn').textContent = 'パスワードで全表示';
-    return;
-  }
-  showPasswordPush('禁止ワードを表示', () => {
-    _fwRevealed = true;
-    document.querySelectorAll('.fw-chip').forEach(c => c.classList.add('revealed'));
-    document.getElementById('fwRevealBtn').textContent = '再び隠す';
-  });
-}
-
-function deleteBuiltinWord(word, level) {
-  if (!_fwRevealed) { showPush('先にパスワードで全表示してください', 'warn'); return; }
-  const lists = loadFWBuiltins();
-  if (level === 'urgent') {
-    lists.urgent = lists.urgent.filter(w => w !== word);
-    lists.sexual = lists.sexual.filter(w => w !== word);
-  } else {
-    lists.warn = lists.warn.filter(w => w !== word);
-  }
-  saveFWBuiltins(lists);
-  renderFWWordCloud();
-}
-
-function renderFWLog() {
-  const tbody = document.getElementById('fwLogTbody');
-  if (!tbody) return;
-  if (!fwLog.length) {
-    tbody.innerHTML = `<tr><td colspan="3" class="fw-log-empty">まだ検知ログがありません</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = [...fwLog].reverse().slice(0, 100).map(l => `
-    <tr>
-      <td style="white-space:nowrap;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">${l.time}</td>
-      <td style="font-weight:600">${l.word}</td>
-      <td><span class="fw-badge-${l.level==='urgent'?'urgent':'warn'}">${l.level==='urgent'?'確定':'疑わしい'}</span></td>
-    </tr>`).join('');
-}
-
-function clearFWLog() {
-  showConfirm('検知ログを削除', 'すべての検知ログを削除しますか？\nこの操作は取り消せません。', '削除する', 'var(--danger)', () => {
-    fwLog = []; saveFWL(); renderFWLog();
-    showToast('検知ログを削除しました', '#dc2626');
-  });
-}
-
-// ── word add/delete ──
-function openAddCustomWord() { openModal('customWordModal'); document.getElementById('customWordInput').value = ''; }
-
-function saveCustomWord() {
-  const word = document.getElementById('customWordInput').value.trim();
-  if (!word) return;
-  const level = document.getElementById('customWordLevel').value;
-  fwCustom.push({word, level});
-  saveFWC();
-  closeModal('customWordModal');
-  renderFWWordCloud();
-}
-
-function deleteCustomWord(i) {
-  fwCustom.splice(i, 1);
-  saveFWC();
-  renderFWWordCloud();
-}
-
-// ── text check ──
-function checkText(text) {
-  if (!text) return false;
-  const lists = loadFWBuiltins();
-  const allUrgent = [...lists.urgent, ...lists.sexual, ...fwCustom.filter(w=>w.level==='urgent').map(w=>w.word)];
-  const allWarn   = [...lists.warn,   ...fwCustom.filter(w=>w.level==='warn').map(w=>w.word)];
-  let matched = false;
-  for (const w of allUrgent) {
-    if (text.includes(w)) { logFW(w,'urgent'); showPush(`禁止ワード検知：「${w}」`, 'urgent', '緊急 — 禁止ワード'); matched = true; }
-  }
-  for (const w of allWarn) {
-    if (text.includes(w)) { logFW(w,'warn'); showPush(`疑わしい発言：「${w}」`, 'warn', '注意 — 禁止ワードの疑い'); matched = true; }
-  }
-  return matched;
-}
-
-function logFW(word, level) {
-  fwLog.push({word, level, time: new Date().toLocaleString('ja-JP')});
-  if (fwLog.length > 200) fwLog = fwLog.slice(-200);
-  saveFWL();
-}
-
-// ── voice test ──
-function runFWTest() {
-  const text = document.getElementById('fwTestInput').value.trim();
-  const resultEl = document.getElementById('fwTestResult');
-  if (!text) { resultEl.style.display = 'none'; return; }
-  const hit = checkText(text);
-  resultEl.style.display = 'block';
-  if (hit) {
-    resultEl.style.color = '#dc2626';
-    resultEl.textContent = '⚠ 禁止ワードが検知されました。上部の通知をご確認ください。';
-    renderFWLog();
-  } else {
-    resultEl.style.color = '#16a34a';
-    resultEl.textContent = '✓ 禁止ワードは検知されませんでした。';
-  }
-}
-
-// ── speech recognition ──
-function startListening() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showPush('この端末は音声認識に対応していません', 'warn'); return;
-  }
-  if (_isListening) return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  _recognition = new SR();
-  _recognition.lang = 'ja-JP';
-  _recognition.continuous = true;
-  _recognition.interimResults = false;
-  _recognition.maxAlternatives = 1;
-  _recognition.onresult = e => {
-    const txt = e.results[e.results.length-1][0].transcript;
-    checkText(txt); // don't store — check and discard
-  };
-  _recognition.onend = () => { if (_isListening) { try { _recognition.start(); } catch(e2){} } };
-  _recognition.onerror = e => {
-    if (e.error === 'not-allowed') {
-      showPush('マイクへのアクセスが許可されていません', 'warn');
-      _isListening = false;
-      const fwInd2=document.getElementById('fwListeningIndicator');if(fwInd2)fwInd2.style.display='none';
-    }
-  };
-  _recognition.start();
-  _isListening = true;
-  const fwInd=document.getElementById('fwListeningIndicator');if(fwInd)fwInd.style.display='';
-}
-
-function stopListening() {
-  _isListening = false;
-  if (_recognition) { try { _recognition.stop(); } catch(e) {} }
-  const fwInd2=document.getElementById('fwListeningIndicator');if(fwInd2)fwInd2.style.display='none';
-}
-
-if (fwSettings.enabled) {
-  document.addEventListener('click', function _initSR() {
-    startListening();
-    document.removeEventListener('click', _initSR);
-  }, {once:true});
-}
+// Forbidden word system removed
 
 // =====================================================
 // ATTENDANCE SYSTEM
 // =====================================================
-function dateKey(d) { return d.toLocaleDateString('ja-JP'); }
-
-// Auto-mark present when temp is recorded
-function markAttPresent(memberId, dateStr) {
-  if (!attendance[dateStr]) attendance[dateStr] = {};
-  if (!attendance[dateStr][memberId]) { // don't overwrite manual entry
-    attendance[dateStr][memberId] = 'present';
-    saveAtt();
-  }
-}
-
-const ATT_STATUS = ['present','absent','late',null];
-const ATT_LABEL  = {present:'✅',absent:'❌',late:'⚠️',null:'—'};
-const ATT_CLASS  = {present:'att-present',absent:'att-absent',late:'att-late',null:'att-unknown'};
+const ATT_STATUS = ['present','absent','late','early',null];
+const ATT_LABEL  = {present:'出',absent:'欠',late:'遅',early:'早',null:'—'};
+const ATT_CLASS  = {present:'att-present',absent:'att-absent',late:'att-late',early:'att-early',null:'att-unknown'};
 
 function changeAttMonth(delta) {
   attViewMonth = new Date(attViewMonth.getFullYear(), attViewMonth.getMonth() + delta, 1);
   renderAttendancePage();
 }
 
+function saveAttCutoff() {
+  const lc = document.getElementById('attLateCutoffInput')?.value;
+  const ec = document.getElementById('attEarlyCutoffInput')?.value;
+  if (lc) attCfg.lateCutoff = lc;
+  if (ec) attCfg.earlyCutoff = ec;
+  saveAttCfg();
+  renderAttendancePage();
+}
+
+function initAttCutoffInputs() {
+  const lc = document.getElementById('attLateCutoffInput');
+  const ec = document.getElementById('attEarlyCutoffInput');
+  if (lc) lc.value = attCfg.lateCutoff || '09:00';
+  if (ec) ec.value = attCfg.earlyCutoff || '15:00';
+}
+
+// Auto-derive attendance status from records
+function autoAttStatus(mem, dateStr) {
+  const recs = records.filter(r => {
+    const d = new Date(r.timestamp);
+    return r.memberId === mem.id && dateKey(d) === dateStr;
+  });
+  const todayStr_ = dateKey(new Date());
+  if (!recs.length) {
+    return (dateStr < todayStr_) ? 'absent' : null;
+  }
+  // Check early departure
+  const earlyCutoff = attCfg.earlyCutoff || null;
+  if (earlyCutoff) {
+    const depTime = departures[mem.id]; // HH:MM string set on departure
+    if (depTime) {
+      // Check if depart time recorded today and before early cutoff
+      const depRec = records.find(r => r.memberId === mem.id && dateKey(new Date(r.timestamp)) === dateStr && r.departTime);
+      const depStr = depRec?.departTime || depTime;
+      if (depStr && dateStr <= todayStr_) {
+        const [eh, em] = earlyCutoff.split(':').map(Number);
+        const [dh, dm] = depStr.split(':').map(Number);
+        if (!isNaN(dh) && dh * 60 + dm < eh * 60 + em) return 'early';
+      }
+    }
+  }
+  // Check late arrival
+  const lateCutoff = attCfg.lateCutoff || null;
+  if (lateCutoff) {
+    const [ch, cm] = lateCutoff.split(':').map(Number);
+    const firstRec = recs.reduce((a,b) => a.timestamp < b.timestamp ? a : b);
+    const recTime = new Date(firstRec.timestamp);
+    if (recTime.getHours() * 60 + recTime.getMinutes() > ch * 60 + cm) return 'late';
+  }
+  return 'present';
+}
+
 function renderAttendancePage() {
   const y = attViewMonth.getFullYear(), m = attViewMonth.getMonth();
-  document.getElementById('attMonthLabel').textContent = `${y}/${String(m+1).padStart(2,'0')}`;
+  const lbl = document.getElementById('attMonthLabel');
+  if (lbl) lbl.textContent = `${y}/${String(m+1).padStart(2,'0')}`;
   const daysInMonth = new Date(y, m+1, 0).getDate();
-  const days = Array.from({length:daysInMonth},(_,i)=>new Date(y,m,i+1));
+  const days = Array.from({length:daysInMonth}, (_, i) => new Date(y, m, i+1));
+  const todayKey = dateKey(new Date());
+  const tbl = document.getElementById('attTable');
+  if (!tbl) return;
   if (!members.length) {
-    document.getElementById('attTable').innerHTML = '<tr><td style="padding:20px;color:var(--text-light)">メンバーがいません</td></tr>';
+    tbl.innerHTML = '<tr><td style="padding:20px;color:var(--text-light)">メンバーがいません</td></tr>';
     return;
   }
-  // Header row
-  let html = '<tr><th>名前</th>' + days.map(d => {
-    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
-    const isWknd = d.getDay()===0||d.getDay()===6;
-    return `<th style="${isWknd?'color:#dc2626':''}">${d.getDate()}<br><span style="font-size:9px">${dow}</span></th>`;
-  }).join('') + '</tr>';
-  // Member rows
-  members.forEach(mem => {
-    html += `<tr><td style="text-align:left;padding:6px 8px;font-size:11px;white-space:nowrap">${mem.name}</td>`;
-    days.forEach(d => {
+  // Split into 7-day weeks
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+  let html = '';
+  weeks.forEach((week, wi) => {
+    // Week header
+    html += '<tr style="background:var(--surface2)">'
+      + '<th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--text-muted);white-space:nowrap;font-weight:600">メンバー</th>';
+    week.forEach(d => {
       const dk = dateKey(d);
-      const st = attendance[dk]?.[mem.id] || null;
-      html += `<td class="${ATT_CLASS[st]}" onclick="cycleAttendance('${dk}',${mem.id})">${ATT_LABEL[st]}</td>`;
+      const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+      const isWknd = d.getDay()===0||d.getDay()===6;
+      const isToday = dk === todayKey;
+      let thStyle = 'min-width:36px;padding:5px 4px;';
+      if (isToday) thStyle += 'background:#fef3c7;color:#b45309;font-weight:800;';
+      else if (isWknd) thStyle += 'color:#dc2626;';
+      html += `<th style="${thStyle}">${d.getDate()}<br><span style="font-size:9px;opacity:0.8">${dow}</span></th>`;
     });
     html += '</tr>';
+    // Member rows
+    members.forEach(mem => {
+      html += `<tr><td style="text-align:left;padding:5px 8px;font-size:12px;white-space:nowrap;border-right:2px solid var(--border-light)">${mem.name}</td>`;
+      week.forEach(d => {
+        const dk = dateKey(d);
+        const manualSt = attendance[dk]?.[mem.id];
+        const st = (manualSt !== undefined) ? manualSt : autoAttStatus(mem, dk);
+        const isToday = dk === todayKey;
+        const tdStyle = isToday ? 'outline:2px solid #f59e0b;outline-offset:-2px;' : '';
+        html += `<td class="${ATT_CLASS[st||null]}" style="${tdStyle}" onclick="cycleAttendance('${dk}',${mem.id})">${ATT_LABEL[st]||'—'}</td>`;
+      });
+      html += '</tr>';
+    });
+    // Spacer between weeks
+    if (wi < weeks.length - 1) {
+      html += `<tr><td colspan="${week.length+1}" style="height:5px;background:var(--border-light)"></td></tr>`;
+    }
   });
-  document.getElementById('attTable').innerHTML = html;
+  tbl.innerHTML = html;
 }
 
 function cycleAttendance(dateStr, memberId) {
   if (!attendance[dateStr]) attendance[dateStr] = {};
-  const cur = attendance[dateStr][memberId] || null;
+  const cur = attendance[dateStr][memberId] !== undefined ? attendance[dateStr][memberId] : null;
   const next = ATT_STATUS[(ATT_STATUS.indexOf(cur) + 1) % ATT_STATUS.length];
   if (next === null) delete attendance[dateStr][memberId];
   else attendance[dateStr][memberId] = next;
@@ -4188,75 +3975,21 @@ function cycleAttendance(dateStr, memberId) {
 function exportAttendanceCSV() {
   const y = attViewMonth.getFullYear(), m = attViewMonth.getMonth();
   const daysInMonth = new Date(y, m+1, 0).getDate();
-  const days = Array.from({length:daysInMonth},(_,i)=>new Date(y,m,i+1));
-  const LABEL_CSV = {present:'出席',absent:'欠席',late:'遅刻',null:''};
-  const header = ['名前', ...days.map(d=>`${m+1}/${d.getDate()}`)].join(',');
+  const days = Array.from({length:daysInMonth}, (_, i) => new Date(y, m, i+1));
+  const LABEL_CSV = {present:'出席', absent:'欠席', late:'遅刻', early:'早退', null:''};
+  const header = ['名前', ...days.map(d => `${m+1}/${d.getDate()}`)].join(',');
   const rows = members.map(mem => [
     `"${mem.name}"`,
-    ...days.map(d => LABEL_CSV[attendance[dateKey(d)]?.[mem.id]||null])
+    ...days.map(d => {
+      const dk = dateKey(d);
+      const manualSt = attendance[dk]?.[mem.id];
+      const st = (manualSt !== undefined) ? manualSt : autoAttStatus(mem, dk);
+      return LABEL_CSV[st] || '';
+    })
   ].join(','));
   const csv = '\uFEFF' + [header, ...rows].join('\r\n');
   triggerDownload(csv, `出席管理_${y}-${String(m+1).padStart(2,'0')}.csv`);
 }
-
-// ---- LOCK SCREEN EVENTS ----
-document.getElementById('lockBtn').addEventListener('click', tryUnlock);
-document.getElementById('lockInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') tryUnlock();
-});
-
-// ---- INIT ----
-checkSession();
-
-// iOS Safari: prevent rubber-band scroll on body, but allow inside open modals
-document.addEventListener('touchmove', function(e){
-  // Allow all touches when admin modal is open (it handles its own scrolling)
-  if (document.body.classList.contains('modal-open')) return;
-  // Block body/html touches to prevent bounce
-  if (e.target === document.body || e.target === document.documentElement) {
-    e.preventDefault();
-  }
-}, { passive: false });
-
-// Fix iOS Safari 100vh issue — recalculate on resize (keyboard open/close)
-function fixVh(){
-  const vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--real-vh', `${vh}px`);
-}
-fixVh();
-window.addEventListener('resize', fixVh);
-window.addEventListener('orientationchange', () => setTimeout(fixVh, 300));
-
-// ---- FULLSCREEN ----
-function requestFullscreen() {
-  const el = document.documentElement;
-  const fn = el.requestFullscreen
-          || el.webkitRequestFullscreen
-          || el.mozRequestFullScreen
-          || el.msRequestFullscreen;
-  if (fn) fn.call(el).catch(() => {});
-}
-
-// iPad Chrome requires fullscreen to be called synchronously inside a user gesture.
-// We attach once to the first touchstart (earliest possible sync point).
-function onFirstTouch() {
-  requestFullscreen();
-  document.removeEventListener('touchstart', onFirstTouch);
-  document.removeEventListener('click', onFirstTouch);
-}
-document.addEventListener('touchstart', onFirstTouch, { passive: true });
-document.addEventListener('click',      onFirstTouch, { passive: true });
-
-// Re-enter fullscreen if user accidentally exits (Android swipe-up etc.)
-function onFsChange() {
-  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-  if (!isFs) {
-    document.addEventListener('touchstart', requestFullscreen, { once: true, passive: true });
-    document.addEventListener('click',      requestFullscreen, { once: true, passive: true });
-  }
-}
-document.addEventListener('fullscreenchange',       onFsChange);
-document.addEventListener('webkitfullscreenchange', onFsChange);
 </script>
 </body>
 </html>
