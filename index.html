@@ -3248,6 +3248,30 @@ function buildCSVContent(targetRecords) {
   return '\uFEFF' + [header, ...rows].join('\r\n');
 }
 
+function exportBasicData() {
+  const today = new Date().toLocaleDateString('ja-JP');
+  exportBasicDataByDate(today);
+}
+
+function exportBasicDataByDate(dateStr) {
+  const NA = 'データなし';
+  const header = ['"メンバー名"','"体温"','"記録時刻"','"帰宅時刻"','"おやつ"'].join(',');
+  const rows = members.map(mem => {
+    const rec = records.find(r =>
+      (r.memberId === mem.id || r.nameId === mem.id) &&
+      new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr
+    );
+    if (!rec) return [`"${mem.name}"`,`"${NA}"`,`"${NA}"`,`"${NA}"`,`"${NA}"`].join(',');
+    const snackVal = getSnackForRecord(rec);
+    const snackStr = snackVal === 'ate' ? '食べた' : snackVal === 'skipped' ? '食べなかった' : NA;
+    const recTime = rec.displayTime ? rec.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '') : NA;
+    return [`"${mem.name}"`, rec.temp.toFixed(1), `"${recTime}"`, `"${rec.departTime||NA}"`, `"${snackStr}"`].join(',');
+  });
+  const csv = '\uFEFF' + [header, ...rows].join('\r\n');
+  triggerDownload(csv, `基本データ_${dateStr.replace(/\//g,'-')}.csv`);
+  showToast(`${dateStr} の基本データをエクスポートしました`);
+}
+
 function exportCSV() {
   if (!records.length) { showToast('記録がありません', '#dc2626'); return; }
   const csv = buildCSVContent(records);
