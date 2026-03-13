@@ -1506,16 +1506,6 @@
   .reminder-time{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--text);width:70px;flex-shrink:0;}
   .reminder-msg{font-size:13px;color:var(--text);flex:1;min-width:0;}
 
-  /* Attendance */
-  .att-table{width:100%;border-collapse:collapse;font-size:12px;}
-  .att-table th{background:var(--surface2);padding:8px 6px;text-align:center;font-weight:600;color:var(--text-muted);border:1px solid var(--border-light);}
-  .att-table td{padding:6px 4px;text-align:center;border:1px solid var(--border-light);cursor:pointer;}
-  .att-table td:first-child{font-weight:600;color:var(--text);font-size:11px;cursor:default;}
-  .att-present{background:#f0fdf4;color:#16a34a;font-weight:700;}
-  .att-absent{background:#fff5f5;color:#dc2626;font-weight:700;}
-  .att-late{background:#fffbf0;color:#d97706;font-weight:700;}
-  .att-unknown{color:var(--text-light);}
-
   /* ===== BOTTOM FLOATING BUTTONS ===== */
   .settings-open-btn{
     position:fixed;bottom:28px;bottom:calc(28px + env(safe-area-inset-bottom,0px));
@@ -1547,10 +1537,6 @@
   }
   .clock-open-btn:active{opacity:0.7;}
 
-  /* Today highlight in attendance */
-  .att-today{background:#fffbeb!important;font-weight:800;color:#b45309!important;}
-  .att-early{background:rgba(124,58,237,0.1);color:#6d28d9;font-weight:700;font-size:13px;cursor:pointer;}
-  .att-week-separator{border-left:2px solid var(--accent)!important;}
 </style>
 </head>
 <body>
@@ -1667,7 +1653,6 @@
       <button class="tab-btn active" onclick="switchTab('records')">記録履歴</button>
       <button class="tab-btn" onclick="switchTab('depart')">帰宅記録</button>
       <button class="tab-btn" onclick="switchTab('members')">メンバー</button>
-      <button class="tab-btn" onclick="switchTab('settings')">設定</button>
     </div>
 
     <!-- RECORDS -->
@@ -1729,47 +1714,6 @@
     </div>
 
     <!-- SETTINGS (体温入力設定のみ) -->
-    <div class="tab-content" id="tab-settings">
-
-      <div class="settings-section-title" style="margin-top:4px">体温ボタン設定</div>
-      <div class="settings-card">
-        <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px">
-          <div>
-            <div class="settings-row-label">ボタンのステップ幅</div>
-            <div class="settings-row-sub">▲ / ▼ ボタンを1回押したときに変化する体温の量</div>
-          </div>
-          <div style="display:flex;gap:24px;flex-wrap:wrap">
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <label style="font-size:12px;color:var(--text-muted);font-weight:600">▲ 上げる量</label>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input type="number" id="upStepInput" min="0.1" max="1.0" step="0.1" class="num-input-sm" oninput="saveTempSteps()">
-                <span style="font-size:13px;color:var(--text-muted)">°C</span>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <label style="font-size:12px;color:var(--text-muted);font-weight:600">▼ 下げる量</label>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input type="number" id="downStepInput" min="0.1" max="1.0" step="0.1" class="num-input-sm" oninput="saveTempSteps()">
-                <span style="font-size:13px;color:var(--text-muted)">°C</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="settings-section-title" style="display:flex;align-items:center;justify-content:space-between">
-        CSV出力の列設定
-        <button class="small-btn btn-csv" onclick="resetCsvCols()">初期化</button>
-      </div>
-      <div class="settings-card">
-        <div style="padding:4px 8px">
-          <div class="settings-row-sub" style="padding:8px 6px 4px">チェックで出力する列を選択　ドラッグで順番を変更できます</div>
-          <div class="csv-col-list" id="csvColList"></div>
-        </div>
-      </div>
-
-    </div>
-
     <div style="margin-top:18px;border-top:1px solid var(--border-light);padding-top:16px;flex-shrink:0">
       <button class="btn-secondary" style="width:100%;font-size:15px" onclick="closeModal('adminModal')">閉じる</button>
     </div>
@@ -1857,7 +1801,6 @@
       <button class="gs-tb"        data-tab="passwords"    onclick="switchGSTab('passwords')">パスワード</button>
       <button class="gs-tb"        data-tab="notifications"onclick="switchGSTab('notifications')">通知</button>
       <button class="gs-tb"        data-tab="reminders"    onclick="switchGSTab('reminders')">リマインダー</button>
-      <button class="gs-tb"        data-tab="attendance"   onclick="switchGSTab('attendance')">出席管理</button>
     </div>
 
     <div class="xl-modal-body">
@@ -1872,10 +1815,6 @@
           </button>
           <button class="settings-nav-row" onclick="openClockFromSettings()">
             <div><div class="settings-row-label">全画面時計を開く</div><div class="settings-row-sub">タップで全画面の時計モードへ切り替えます</div></div>
-            <span class="settings-nav-chevron">›</span>
-          </button>
-          <button class="settings-nav-row" onclick="switchGSTab('attendance')">
-            <div><div class="settings-row-label">出席管理</div><div class="settings-row-sub">出席・欠席・遅刻の確認と管理</div></div>
             <span class="settings-nav-chevron">›</span>
           </button>
           <button class="settings-nav-row" onclick="exportBasicData()" style="color:var(--accent)">
@@ -2002,44 +1941,6 @@
         </div>
       </div>
 
-
-      <!-- 出席管理 -->
-      <div class="gs-tab" id="gsTab-attendance">
-        <div class="settings-section-title">出席ルール設定</div>
-        <div class="settings-card" style="margin-bottom:14px">
-          <div class="settings-row">
-            <div><div class="settings-row-label">遅刻判定時刻</div><div class="settings-row-sub">この時刻を過ぎて記録した場合は遅刻扱い</div></div>
-            <input type="time" id="attLateCutoffInput" class="modal-input" style="width:120px;font-family:'DM Mono',monospace;font-size:14px" onchange="saveAttCutoff()">
-          </div>
-          <div class="settings-row">
-            <div><div class="settings-row-label">早退判定時刻</div><div class="settings-row-sub">この時刻より前に帰宅記録があると早退扱い</div></div>
-            <input type="time" id="attEarlyCutoffInput" class="modal-input" style="width:120px;font-family:'DM Mono',monospace;font-size:14px" onchange="saveAttCutoff()">
-          </div>
-        </div>
-        <div class="settings-section-title" style="margin-top:16px">出席管理</div>
-        <div class="settings-card" style="margin-bottom:14px">
-          <div class="settings-row">
-            <div><div class="settings-row-label">表示月</div></div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <button class="small-btn" style="padding:6px 12px;font-size:16px" onclick="changeAttMonth(-1)">‹</button>
-              <span id="attMonthLabel" style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;min-width:80px;text-align:center"></span>
-              <button class="small-btn" style="padding:6px 12px;font-size:16px" onclick="changeAttMonth(1)">›</button>
-            </div>
-          </div>
-          <div class="settings-row">
-            <div><div class="settings-row-label">CSV出力</div><div class="settings-row-sub">表示中の月の出席データをダウンロード</div></div>
-            <button class="small-btn btn-csv" onclick="exportAttendanceCSV()">CSV出力</button>
-          </div>
-        </div>
-        <div class="settings-section-title">出席一覧
-          <span style="font-size:11px;font-weight:400;color:var(--text-light);margin-left:6px">セルをタップで切替</span>
-        </div>
-        <div style="overflow-x:auto"><table class="att-table" id="attTable"></table></div>
-        <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--text-muted);line-height:2">
-          出席　欠席　遅刻・早退　未記録<br>体温を記録した日は自動的に「出席」になります
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -2157,8 +2058,6 @@ const K = {
   holdDelay:  'hcHoldDelay5',
   notifCfg:   'hcNotifCfg5',
   reminders:  'hcReminders5',
-  attendance: 'hcAttendance5',
-  attCfg:     'hcAttCfg5',
   clockCfg:   'hcClockCfg5',
 };
 
@@ -2181,17 +2080,12 @@ let tempSteps    = JSON.parse(localStorage.getItem(K.tempSteps) || 'null') || _d
 let holdDelay    = parseFloat(localStorage.getItem(K.holdDelay) || '0.8'); // seconds
 let notifCfg     = JSON.parse(localStorage.getItem(K.notifCfg)  || 'null') || {duration:4, sound:true};
 let reminders    = JSON.parse(localStorage.getItem(K.reminders) || '[]');
-let attendance   = JSON.parse(localStorage.getItem(K.attendance)|| '{}'); // {'YYYY/M/D':{'memberId':'present'|'absent'|'late'}}
-let attViewMonth = new Date();
-let attCfg = JSON.parse(localStorage.getItem('hcAttCfg5')||'null') || {lateCutoff:'09:00',earlyCutoff:'15:00'};
-const saveAttCfg = () => localStorage.setItem('hcAttCfg5', JSON.stringify(attCfg));
 let clockCfg     = JSON.parse(localStorage.getItem(K.clockCfg) || 'null') || {msg:'Welcome to\nKiitos Base', fmt:'24', style:'digital', secs:true};
 const saveClockCfg = () => localStorage.setItem(K.clockCfg, JSON.stringify(clockCfg));
 const saveTS      = () => localStorage.setItem(K.tempSteps,  JSON.stringify(tempSteps));
 const saveHD      = () => localStorage.setItem(K.holdDelay,  holdDelay);
 const saveNC      = () => localStorage.setItem(K.notifCfg,   JSON.stringify(notifCfg));
 const saveReminders=() => localStorage.setItem(K.reminders,  JSON.stringify(reminders));
-const saveAtt     = () => localStorage.setItem(K.attendance, JSON.stringify(attendance));
 
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const saveRecords     = () => save(K.records,    records);
@@ -2654,8 +2548,6 @@ function recordData() {
     });
     saveRecords();
     showToast(selectedName.name + ' さん　' + v.toFixed(1) + '°C　記録しました');
-    // Auto-mark attendance
-    markAttPresent(selectedName.id, today);
     document.getElementById('tempInput').value = '36.0';
     updateSubmitBtn();
     renderNames();
@@ -2701,7 +2593,7 @@ function openAdminPanel() {
 }
 
 function switchTab(tab) {
-  const tabs = ['records','depart','members','settings'];
+  const tabs = ['records','depart','members'];
   document.querySelectorAll('.tab-btn').forEach((b,i) =>
     b.classList.toggle('active', tabs[i] === tab)
   );
@@ -2710,11 +2602,6 @@ function switchTab(tab) {
   if (tab === 'records')  { renderStats(); renderRecordsTable(); }
   if (tab === 'depart')   renderDepartGrid();
   if (tab === 'members')  { renderMemberList(); renderVisibilityGrid(); }
-  if (tab === 'settings') {
-    renderCsvColSettings();
-    document.getElementById('upStepInput').value   = tempSteps.up.toFixed(1);
-    document.getElementById('downStepInput').value = tempSteps.down.toFixed(1);
-  }
 }
 
 // ---- STATS ----
@@ -3304,95 +3191,61 @@ function resetCsvCols() {
 
 // ---- CSV EXPORT ----
 function buildCSVContent(targetRecords) {
-  // Build column list — always include snack regardless of csvCols setting
   const enabled = csvCols.filter(c => c.enabled);
   const cols = enabled.some(c => c.key === 'snack')
     ? enabled
     : (() => {
-        // Insert snack before timestamp if present, else append
         const copy = [...enabled];
         const tsIdx = copy.findIndex(c => c.key === 'timestamp');
-        const snackCol = { key:'snack', label:'おやつ' };
-        if (tsIdx >= 0) copy.splice(tsIdx, 0, snackCol);
-        else copy.push(snackCol);
+        if (tsIdx >= 0) copy.splice(tsIdx, 0, { key:'snack', label:'おやつ' });
+        else copy.push({ key:'snack', label:'おやつ' });
         return copy;
       })();
+
+  const NA = 'データなし';
 
   function snackLabel(r) {
     const s = getSnackForRecord(r);
     if (s === 'ate')     return '食べた';
     if (s === 'skipped') return '食べなかった';
-    return '';
+    return NA;
   }
 
-  // Numbers unquoted (VBA/Excel reads as numeric), text double-quoted
   function cell(v, isNum) {
     if (isNum) return String(v);
     return '"' + String(v).replace(/"/g, '""') + '"';
   }
 
+  const allDates = [...new Set(targetRecords.map(r =>
+    new Date(r.timestamp).toLocaleDateString('ja-JP')
+  ))].sort((a, b) => new Date(b.replace(/\//g,'-')) - new Date(a.replace(/\//g,'-')));
+
   const header = cols.map(c => cell(c.label, false)).join(',');
 
-  const rows = targetRecords.map(r =>
-    cols.map(c => {
-      switch (c.key) {
-        case 'name':        return cell(r.name || '', false);
-        case 'temp':        return cell(r.temp.toFixed(1), true);
-        case 'status':      return cell(getStatus(r.temp), false);
-        case 'displayTime': return cell(r.displayTime || '', false);
-        case 'departTime':  return cell(r.departTime || '', false);
-        case 'snack':       return cell(snackLabel(r), false);
-        case 'timestamp':   return cell(r.timestamp || '', false);
-        default:            return cell(r[c.key] || '', false);
-      }
-    }).join(',')
-  );
-
-  return '\uFEFF' + [header, ...rows].join('\r\n');
-}
-
-
-// =====================================================
-// BASIC DATA EXPORT (全メンバー × 日付, データなし for missing)
-// =====================================================
-function exportBasicData() {
-  // Export today by default; if no records at all, use today's date
-  const today = new Date().toLocaleDateString('ja-JP');
-  exportBasicDataByDate(today);
-}
-
-function exportBasicDataByDate(dateStr) {
-  const NA = 'データなし';
-  const header = ['"メンバー名"','"体温"','"記録時刻"','"帰宅時刻"','"おやつ"'].join(',');
-
-  const rows = members.map(mem => {
-    const rec = records.find(r =>
-      (r.memberId === mem.id || r.nameId === mem.id) &&
-      new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr
-    );
-    if (!rec) {
-      return [
-        `"${mem.name}"`, `"${NA}"`, `"${NA}"`, `"${NA}"`, `"${NA}"`
-      ].join(',');
-    }
-    const snackVal = getSnackForRecord(rec);
-    const snackStr = snackVal === 'ate' ? '食べた' : snackVal === 'skipped' ? '食べなかった' : NA;
-    const recTime = rec.displayTime
-      ? rec.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '')
-      : NA;
-    return [
-      `"${mem.name}"`,
-      rec.temp.toFixed(1),
-      `"${recTime}"`,
-      `"${rec.departTime || NA}"`,
-      `"${snackStr}"`
-    ].join(',');
+  const rows = [];
+  allDates.forEach(dateStr => {
+    members.forEach(mem => {
+      const r = targetRecords.find(rec =>
+        (rec.memberId === mem.id || rec.nameId === mem.id) &&
+        new Date(rec.timestamp).toLocaleDateString('ja-JP') === dateStr
+      );
+      rows.push(cols.map(c => {
+        if (c.key === 'name') return cell(r ? (r.name || mem.name) : mem.name, false);
+        if (!r) return cell(NA, false);
+        switch (c.key) {
+          case 'temp':        return cell(r.temp.toFixed(1), true);
+          case 'status':      return cell(getStatus(r.temp), false);
+          case 'displayTime': return cell(r.displayTime || NA, false);
+          case 'departTime':  return cell(r.departTime  || NA, false);
+          case 'snack':       return cell(snackLabel(r), false);
+          case 'timestamp':   return cell(r.timestamp   || NA, false);
+          default:            return cell(r[c.key]      || NA, false);
+        }
+      }).join(','));
+    });
   });
 
-  const csv = '\uFEFF' + [header, ...rows].join('\r\n');
-  const fname = `基本データ_${dateStr.replace(/\//g,'-')}.csv`;
-  triggerDownload(csv, fname);
-  showToast(`${dateStr} の基本データをエクスポートしました`);
+  return '\uFEFF' + [header, ...rows].join('\r\n');
 }
 
 function exportCSV() {
@@ -3405,10 +3258,19 @@ function exportCSV() {
 
 function exportCSVByDate(dateStr) {
   const dayRecs = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr);
-  if (!dayRecs.length) { showToast('記録がありません', '#dc2626'); return; }
-  const csv = buildCSVContent(dayRecs);
-  const fname = `体温記録_${dateStr.replace(/\//g, '-')}.csv`;
-  triggerDownload(csv, fname);
+  let csv;
+  if (dayRecs.length) {
+    csv = buildCSVContent(dayRecs);
+  } else {
+    // No records for this date — output all members as データなし
+    const NA = 'データなし';
+    const enabled = csvCols.filter(c => c.enabled);
+    const cell = v => '"' + String(v).replace(/"/g,'""') + '"';
+    const header = enabled.map(c => cell(c.label)).join(',');
+    const rows = members.map(m => enabled.map(c => c.key === 'name' ? cell(m.name) : cell(NA)).join(','));
+    csv = '\uFEFF' + [header, ...rows].join('\r\n');
+  }
+  triggerDownload(csv, `体温記録_${dateStr.replace(/\//g,'-')}.csv`);
   showToast(`${dateStr} のCSVを出力しました`);
 }
 
@@ -3566,7 +3428,7 @@ function closeXlModal(id) {
 }
 
 let _currentGSTab = 'menu';
-const GS_TABS = ['menu','tempmanage','clock','passwords','notifications','reminders','attendance'];
+const GS_TABS = ['menu','tempmanage','clock','passwords','notifications','reminders'];
 
 function switchGSTab(tab) {
   _currentGSTab = tab;
@@ -3583,7 +3445,6 @@ function switchGSTab(tab) {
   // Init per-tab
   if (tab === 'notifications') initNotifPage();
   if (tab === 'reminders')     renderReminderList();
-  if (tab === 'attendance')    { renderAttendancePage(); initAttCutoffInputs(); }
   if (tab === 'tempmanage')    renderTempManageTab();
   if (tab === 'clock')         initClockSettings();
 }
@@ -3914,152 +3775,7 @@ setInterval(() => {
 
 // Forbidden word system removed
 
-// =====================================================
-// ATTENDANCE SYSTEM
-// =====================================================
-const ATT_STATUS = ['present','absent','late','early',null];
-const ATT_LABEL  = {present:'出',absent:'欠',late:'遅',early:'早',null:'—'};
-const ATT_CLASS  = {present:'att-present',absent:'att-absent',late:'att-late',early:'att-early',null:'att-unknown'};
 
-function changeAttMonth(delta) {
-  attViewMonth = new Date(attViewMonth.getFullYear(), attViewMonth.getMonth() + delta, 1);
-  renderAttendancePage();
-}
-
-function saveAttCutoff() {
-  const lc = document.getElementById('attLateCutoffInput')?.value;
-  const ec = document.getElementById('attEarlyCutoffInput')?.value;
-  if (lc) attCfg.lateCutoff = lc;
-  if (ec) attCfg.earlyCutoff = ec;
-  saveAttCfg();
-  renderAttendancePage();
-}
-
-function initAttCutoffInputs() {
-  const lc = document.getElementById('attLateCutoffInput');
-  const ec = document.getElementById('attEarlyCutoffInput');
-  if (lc) lc.value = attCfg.lateCutoff || '09:00';
-  if (ec) ec.value = attCfg.earlyCutoff || '15:00';
-}
-
-// Auto-derive attendance status from records
-function autoAttStatus(mem, dateStr) {
-  const recs = records.filter(r => {
-    const d = new Date(r.timestamp);
-    return r.memberId === mem.id && dateKey(d) === dateStr;
-  });
-  const todayStr_ = dateKey(new Date());
-  if (!recs.length) {
-    return (dateStr < todayStr_) ? 'absent' : null;
-  }
-  // Check early departure
-  const earlyCutoff = attCfg.earlyCutoff || null;
-  if (earlyCutoff) {
-    const depTime = departures[mem.id]; // HH:MM string set on departure
-    if (depTime) {
-      // Check if depart time recorded today and before early cutoff
-      const depRec = records.find(r => r.memberId === mem.id && dateKey(new Date(r.timestamp)) === dateStr && r.departTime);
-      const depStr = depRec?.departTime || depTime;
-      if (depStr && dateStr <= todayStr_) {
-        const [eh, em] = earlyCutoff.split(':').map(Number);
-        const [dh, dm] = depStr.split(':').map(Number);
-        if (!isNaN(dh) && dh * 60 + dm < eh * 60 + em) return 'early';
-      }
-    }
-  }
-  // Check late arrival
-  const lateCutoff = attCfg.lateCutoff || null;
-  if (lateCutoff) {
-    const [ch, cm] = lateCutoff.split(':').map(Number);
-    const firstRec = recs.reduce((a,b) => a.timestamp < b.timestamp ? a : b);
-    const recTime = new Date(firstRec.timestamp);
-    if (recTime.getHours() * 60 + recTime.getMinutes() > ch * 60 + cm) return 'late';
-  }
-  return 'present';
-}
-
-function renderAttendancePage() {
-  const y = attViewMonth.getFullYear(), m = attViewMonth.getMonth();
-  const lbl = document.getElementById('attMonthLabel');
-  if (lbl) lbl.textContent = `${y}/${String(m+1).padStart(2,'0')}`;
-  const daysInMonth = new Date(y, m+1, 0).getDate();
-  const days = Array.from({length:daysInMonth}, (_, i) => new Date(y, m, i+1));
-  const todayKey = dateKey(new Date());
-  const tbl = document.getElementById('attTable');
-  if (!tbl) return;
-  if (!members.length) {
-    tbl.innerHTML = '<tr><td style="padding:20px;color:var(--text-light)">メンバーがいません</td></tr>';
-    return;
-  }
-  // Split into 7-day weeks
-  const weeks = [];
-  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
-  let html = '';
-  weeks.forEach((week, wi) => {
-    // Week header
-    html += '<tr style="background:var(--surface2)">'
-      + '<th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--text-muted);white-space:nowrap;font-weight:600">メンバー</th>';
-    week.forEach(d => {
-      const dk = dateKey(d);
-      const dow = ['日','月','火','水','木','金','土'][d.getDay()];
-      const isWknd = d.getDay()===0||d.getDay()===6;
-      const isToday = dk === todayKey;
-      let thStyle = 'min-width:36px;padding:5px 4px;';
-      if (isToday) thStyle += 'background:#fef3c7;color:#b45309;font-weight:800;';
-      else if (isWknd) thStyle += 'color:#dc2626;';
-      html += `<th style="${thStyle}">${d.getDate()}<br><span style="font-size:9px;opacity:0.8">${dow}</span></th>`;
-    });
-    html += '</tr>';
-    // Member rows
-    members.forEach(mem => {
-      html += `<tr><td style="text-align:left;padding:5px 8px;font-size:12px;white-space:nowrap;border-right:2px solid var(--border-light)">${mem.name}</td>`;
-      week.forEach(d => {
-        const dk = dateKey(d);
-        const manualSt = attendance[dk]?.[mem.id];
-        const st = (manualSt !== undefined) ? manualSt : autoAttStatus(mem, dk);
-        const isToday = dk === todayKey;
-        const tdStyle = isToday ? 'outline:2px solid #f59e0b;outline-offset:-2px;' : '';
-        html += `<td class="${ATT_CLASS[st||null]}" style="${tdStyle}" onclick="cycleAttendance('${dk}',${mem.id})">${ATT_LABEL[st]||'—'}</td>`;
-      });
-      html += '</tr>';
-    });
-    // Spacer between weeks
-    if (wi < weeks.length - 1) {
-      html += `<tr><td colspan="${week.length+1}" style="height:5px;background:var(--border-light)"></td></tr>`;
-    }
-  });
-  tbl.innerHTML = html;
-}
-
-function cycleAttendance(dateStr, memberId) {
-  if (!attendance[dateStr]) attendance[dateStr] = {};
-  const cur = attendance[dateStr][memberId] !== undefined ? attendance[dateStr][memberId] : null;
-  const next = ATT_STATUS[(ATT_STATUS.indexOf(cur) + 1) % ATT_STATUS.length];
-  if (next === null) delete attendance[dateStr][memberId];
-  else attendance[dateStr][memberId] = next;
-  if (attendance[dateStr] && Object.keys(attendance[dateStr]).length === 0) delete attendance[dateStr];
-  saveAtt();
-  renderAttendancePage();
-}
-
-function exportAttendanceCSV() {
-  const y = attViewMonth.getFullYear(), m = attViewMonth.getMonth();
-  const daysInMonth = new Date(y, m+1, 0).getDate();
-  const days = Array.from({length:daysInMonth}, (_, i) => new Date(y, m, i+1));
-  const LABEL_CSV = {present:'出席', absent:'欠席', late:'遅刻', early:'早退', null:''};
-  const header = ['名前', ...days.map(d => `${m+1}/${d.getDate()}`)].join(',');
-  const rows = members.map(mem => [
-    `"${mem.name}"`,
-    ...days.map(d => {
-      const dk = dateKey(d);
-      const manualSt = attendance[dk]?.[mem.id];
-      const st = (manualSt !== undefined) ? manualSt : autoAttStatus(mem, dk);
-      return LABEL_CSV[st] || '';
-    })
-  ].join(','));
-  const csv = '\uFEFF' + [header, ...rows].join('\r\n');
-  triggerDownload(csv, `出席管理_${y}-${String(m+1).padStart(2,'0')}.csv`);
-}
 </script>
 </body>
 </html>
