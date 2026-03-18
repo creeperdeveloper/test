@@ -1715,7 +1715,7 @@
 
 
 <!-- ===== RECORDS LIST OVERLAY ===== -->
-<div class="modal-overlay" id="recordsListOverlay" style="align-items:stretch;justify-content:stretch;padding:0">
+<div class="modal-overlay" id="recordsListOverlay" style="align-items:stretch;justify-content:stretch;padding:0;z-index:1400">
   <div style="display:flex;flex-direction:column;width:100%;height:100%;background:#f0f4f8;max-width:100%;max-height:100%;border-radius:0">
     <!-- Header -->
     <div style="display:flex;align-items:center;gap:12px;padding:max(20px,env(safe-area-inset-top,0px)) 20px 14px;background:#e8ecf2;border-bottom:1px solid var(--border-light);flex-shrink:0">
@@ -1766,7 +1766,7 @@
 </div>
 
 <!-- CUSTOM CONFIRM MODAL (replaces browser confirm() for iPad compatibility) -->
-<div class="modal-overlay" id="confirmModal">
+<div class="modal-overlay" id="confirmModal" style="z-index:1500">
   <div class="modal" style="max-width:360px">
     <div class="modal-h" id="confirmTitle">確認</div>
     <div class="modal-sub" id="confirmMsg" style="white-space:pre-line"></div>
@@ -1778,7 +1778,7 @@
 </div>
 
 <!-- EDIT RECORD MODAL -->
-<div class="modal-overlay" id="editModal">
+<div class="modal-overlay" id="editModal" style="z-index:1500">
   <div class="modal" style="max-width:360px">
     <div class="modal-h">記録を編集</div>
     <div class="modal-sub">内容を修正して「保存」を押してください</div>
@@ -2808,6 +2808,7 @@ function deleteRecord(id) {
       saveRecords();
       renderRecordsTable();
       renderStats();
+      if (document.getElementById('recordsListOverlay')?.classList.contains('open')) renderRecordsListOverlay();
       showToast('削除しました', '#dc2626');
     }
   );
@@ -2855,6 +2856,7 @@ function saveEdit() {
   closeModal('editModal');
   renderRecordsTable();
   renderStats();
+  if (document.getElementById('recordsListOverlay')?.classList.contains('open')) renderRecordsListOverlay();
   showToast('記録を更新しました');
 }
 
