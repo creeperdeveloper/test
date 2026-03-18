@@ -1658,19 +1658,12 @@
     <!-- RECORDS -->
     <div class="tab-content active" id="tab-records">
       <div class="stats-grid" id="statsGrid" style="flex-shrink:0"></div>
-      <div class="action-bar" style="flex-shrink:0">
-        <input class="search-input" type="text" placeholder="名前や体温で検索..."
-          id="recordSearch" oninput="renderRecordsTable()">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="small-btn btn-csv" onclick="exportCSV()">CSV出力</button>
-          <button class="small-btn btn-del" onclick="clearAllData()">全削除</button>
-        </div>
+      <div style="margin-top:14px;flex-shrink:0">
+        <button class="btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="openRecordsList()">記録を見る</button>
       </div>
-      <div class="tbl-wrap">
-        <table class="records-table">
-          <thead><tr id="recordsTableHead"></tr></thead>
-          <tbody id="recordsTbody"></tbody>
-        </table>
+      <div style="margin-top:10px;flex-shrink:0;display:flex;gap:8px">
+        <button class="small-btn btn-csv" onclick="exportCSV()" style="flex:1">全件CSV出力</button>
+        <button class="small-btn btn-del" onclick="clearAllData()" style="flex:1">全削除</button>
       </div>
     </div>
 
@@ -1716,6 +1709,30 @@
     <!-- SETTINGS (体温入力設定のみ) -->
     <div style="margin-top:18px;border-top:1px solid var(--border-light);padding-top:16px;flex-shrink:0">
       <button class="btn-secondary" style="width:100%;font-size:15px" onclick="closeModal('adminModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== RECORDS LIST OVERLAY ===== -->
+<div class="modal-overlay" id="recordsListOverlay" style="align-items:stretch;justify-content:stretch;padding:0">
+  <div style="display:flex;flex-direction:column;width:100%;height:100%;background:#f0f4f8;max-width:100%;max-height:100%;border-radius:0">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:12px;padding:max(20px,env(safe-area-inset-top,0px)) 20px 14px;background:#e8ecf2;border-bottom:1px solid var(--border-light);flex-shrink:0">
+      <button onclick="closeRecordsList()" style="height:36px;padding:0 14px;border-radius:18px;border:none;background:#fff;color:var(--text-muted);font-size:13px;font-weight:600;font-family:'Noto Sans JP',sans-serif;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);-webkit-appearance:none;flex-shrink:0">← 戻る</button>
+      <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:center">
+        <button onclick="shiftRecordsDate(-1)" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;box-shadow:0 1px 4px rgba(0,0,0,0.08)">‹</button>
+        <span id="recordsListDateLabel" style="font-size:15px;font-weight:700;color:var(--text);min-width:120px;text-align:center;font-family:'DM Mono',monospace"></span>
+        <button onclick="shiftRecordsDate(1)" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;box-shadow:0 1px 4px rgba(0,0,0,0.08)">›</button>
+      </div>
+      <button onclick="exportCSVByDate(_recordsListDate)" style="height:36px;padding:0 14px;border-radius:18px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;font-family:'Noto Sans JP',sans-serif;cursor:pointer;-webkit-appearance:none;flex-shrink:0">CSV</button>
+    </div>
+    <!-- Table -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 env(safe-area-inset-bottom,0px)">
+      <table class="records-table" style="width:100%">
+        <thead><tr id="recordsListHead"></tr></thead>
+        <tbody id="recordsListBody"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -2599,7 +2616,7 @@ function switchTab(tab) {
   );
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'records')  { renderStats(); renderRecordsTable(); }
+  if (tab === 'records')  { renderStats(); }
   if (tab === 'depart')   renderDepartGrid();
   if (tab === 'members')  { renderMemberList(); renderVisibilityGrid(); }
 }
@@ -2646,6 +2663,10 @@ function renderStats() {
 
 // ---- RECORDS TABLE ----
 function renderRecordsTable() {
+  if (document.getElementById('recordsListOverlay')?.classList.contains('open')) renderRecordsListOverlay();
+  // (legacy table no longer rendered in UI — overlay handles display)
+  return;
+
   const headCols = [
     { key:'name',        label:'氏名'     },
     { key:'temp',        label:'体温'     },
@@ -3246,6 +3267,113 @@ function buildCSVContent(targetRecords) {
   });
 
   return '\uFEFF' + [header, ...rows].join('\r\n');
+}
+
+
+// =====================================================
+// RECORDS LIST OVERLAY (full-screen per-date view)
+// =====================================================
+let _recordsListDate = null;
+
+function openRecordsList() {
+  // Default to most recent date that has records, or today
+  const allDates = [...new Set(records.map(r => new Date(r.timestamp).toLocaleDateString('ja-JP')))]
+    .sort((a,b) => new Date(b.replace(/\//g,'-')) - new Date(a.replace(/\//g,'-')));
+  _recordsListDate = allDates[0] || new Date().toLocaleDateString('ja-JP');
+  document.getElementById('recordsListOverlay').classList.add('open');
+  document.body.classList.add('modal-open');
+  renderRecordsListOverlay();
+}
+
+function closeRecordsList() {
+  document.getElementById('recordsListOverlay').classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+function shiftRecordsDate(delta) {
+  // Get all dates with records (or if none, stay on today)
+  const allDates = [...new Set(records.map(r => new Date(r.timestamp).toLocaleDateString('ja-JP')))]
+    .sort((a,b) => new Date(a.replace(/\//g,'-')) - new Date(b.replace(/\//g,'-')));
+  if (!allDates.length) return;
+  const idx = allDates.indexOf(_recordsListDate);
+  const newIdx = Math.max(0, Math.min(allDates.length - 1, idx + delta));
+  _recordsListDate = allDates[newIdx];
+  renderRecordsListOverlay();
+}
+
+function renderRecordsListOverlay() {
+  const dateStr = _recordsListDate;
+  const isToday = dateStr === new Date().toLocaleDateString('ja-JP');
+
+  // Update date label
+  const lbl = document.getElementById('recordsListDateLabel');
+  if (lbl) lbl.textContent = dateStr + (isToday ? '　(本日)' : '');
+
+  const headCols = [
+    { key:'name',        label:'氏名'     },
+    { key:'temp',        label:'体温'     },
+    { key:'status',      label:'状態'     },
+    { key:'displayTime', label:'記録時刻' },
+    { key:'departTime',  label:'帰宅'     },
+    { key:'snack',       label:'おやつ'  },
+  ];
+
+  document.getElementById('recordsListHead').innerHTML =
+    [...headCols.map(c => `<th>${c.label}</th>`), '<th style="width:90px"></th>'].join('');
+
+  const NA = '<span style="color:var(--text-light);font-size:11px;font-style:italic">データなし</span>';
+  const dayRecords = records.filter(r => new Date(r.timestamp).toLocaleDateString('ja-JP') === dateStr);
+  const recordedIds = new Set(dayRecords.map(r => r.memberId ?? r.nameId));
+
+  const allRows = [
+    ...dayRecords,
+    ...members.filter(m => !recordedIds.has(m.id)).map(m => ({ _noRecord:true, memberId:m.id, name:m.name }))
+  ];
+
+  if (!allRows.length) {
+    document.getElementById('recordsListBody').innerHTML =
+      `<tr><td colspan="${headCols.length+1}" style="text-align:center;color:var(--text-muted);padding:30px">記録がありません</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  allRows.forEach(r => {
+    if (r._noRecord) {
+      html += `<tr style="opacity:0.5">
+        <td style="font-weight:500">${r.name}</td>
+        <td>${NA}</td><td>${NA}</td><td>${NA}</td><td>${NA}</td><td>${NA}</td>
+        <td></td></tr>`;
+      return;
+    }
+    const snackVal = getSnackForRecord(r);
+    const cells = headCols.map(c => {
+      if (c.key === 'temp')
+        return `<td class="temp-cell ${getTempClass(r.temp)}">${r.temp.toFixed(1)}°C</td>`;
+      if (c.key === 'status')
+        return `<td><span class="badge ${getBadgeClass(r.temp)}">${getStatus(r.temp)}</span></td>`;
+      if (c.key === 'displayTime') {
+        const t = r.displayTime ? r.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '') : '';
+        return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${t||NA}</td>`;
+      }
+      if (c.key === 'departTime')
+        return `<td>${r.departTime ? `<span class="badge badge-home">${r.departTime}</span>` : NA}</td>`;
+      if (c.key === 'snack') {
+        const ateActive  = snackVal === 'ate';
+        const skipActive = snackVal === 'skipped';
+        return `<td><div style="display:flex;gap:4px">
+          <button class="snack-tgl${ateActive?' snack-tgl-ate':''}" onclick="toggleSnackFromTable(${r.nameId??r.memberId},'ate','${dateStr}');renderRecordsListOverlay()">食べた</button>
+          <button class="snack-tgl${skipActive?' snack-tgl-skip':''}" onclick="toggleSnackFromTable(${r.nameId??r.memberId},'skipped','${dateStr}');renderRecordsListOverlay()">食べなかった</button>
+        </div></td>`;
+      }
+      return `<td style="font-weight:500">${r[c.key]||NA}</td>`;
+    }).join('');
+    html += `<tr>${cells}
+      <td><div style="display:flex;gap:4px">
+        <button class="icon-btn" onclick="openEditModal(${r.id})">編集</button>
+        <button class="icon-btn del" onclick="deleteRecord(${r.id})">削除</button>
+      </div></td></tr>`;
+  });
+  document.getElementById('recordsListBody').innerHTML = html;
 }
 
 function exportBasicData() {
