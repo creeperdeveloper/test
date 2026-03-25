@@ -1017,11 +1017,10 @@
   }
 
   .snack-btn{
-    display:table-cell;
-    width:50%;
-    padding:8px 4px;
+    display:block;
+    padding:10px 8px;
     border-radius:var(--radius-xs);
-    font-size:12px;
+    font-size:13px;
     font-weight:700;
     font-family:'Noto Sans JP',sans-serif;
     cursor:pointer;
@@ -1030,6 +1029,7 @@
     -webkit-appearance:none;
     text-align:center;
     box-sizing:border-box;
+    white-space:nowrap;
   }
 
   .snack-btn-yes{
@@ -1064,11 +1064,13 @@
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
     touch-action:pan-y;
+    flex:1;
+    min-height:0;
   }
 
   .member-row{
     display:flex;align-items:center;gap:10px;
-    padding:14px 16px;
+    padding:10px 12px;
     background:#fff;border:1px solid var(--border-light);
     border-radius:var(--radius-sm);
   }
@@ -1606,8 +1608,8 @@
     <button class="submit-btn" id="submitBtn" onclick="recordData()" disabled>
       記録する
     </button>
-    <button class="depart-quick-btn" id="departQuickBtn" onclick="recordDepartQuick()">
-      帰宅を記録する
+    <button class="depart-quick-btn" id="departQuickBtn" onclick="openQuickPanel()">
+      クイック
     </button>
     <div class="submit-hint" id="submitHint">名前と体温を確認してからボタンを押してください</div>
   </div>
@@ -1679,29 +1681,29 @@
 
     <!-- MEMBERS -->
     <div class="tab-content" id="tab-members">
-      <div class="action-bar" style="margin-bottom:14px">
-        <span style="font-size:14px;color:var(--text-muted)">登録済みメンバー一覧</span>
-        <button class="small-btn btn-add" onclick="openAddMember()">追加する</button>
+      <!-- Action bar with both add buttons -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-shrink:0">
+        <span style="font-size:13px;color:var(--text-muted);flex:1">メンバー一覧</span>
+        <button class="small-btn btn-add" style="font-size:12px" onclick="openAddMember()">＋ メンバー</button>
+        <button class="small-btn" style="font-size:12px;background:#fff3e0;border:1px solid var(--warn);color:var(--warn)" onclick="openAddGuest()">＋ ゲスト</button>
       </div>
+      <!-- Unified list -->
       <div class="member-list" id="memberList"></div>
-      <div id="memberEmpty" style="display:none;padding:36px;text-align:center;color:var(--text-light);font-size:14px;line-height:2;">
-        まだメンバーが登録されていません<br>「追加する」ボタンからメンバーを登録してください
+      <div id="memberEmpty" style="display:none;padding:20px;text-align:center;color:var(--text-light);font-size:13px;flex-shrink:0">
+        メンバーがいません
       </div>
 
-      <!-- visibility section inside members tab -->
-      <div style="margin-top:20px">
-        <div class="settings-section-title" style="display:flex;align-items:center;justify-content:space-between">
-          入力画面での表示設定
+      <!-- visibility section -->
+      <div style="margin-top:14px;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:600;color:var(--text-muted)">入力画面の表示設定</span>
           <div style="display:flex;gap:6px">
-            <button class="small-btn btn-add" style="font-size:12px" onclick="setAllVisibility(true)">全員表示</button>
-            <button class="small-btn" style="font-size:12px;border:1px solid var(--border);color:var(--text-muted);background:transparent;" onclick="setAllVisibility(false)">全員非表示</button>
+            <button class="small-btn btn-add" style="font-size:11px;padding:4px 10px" onclick="setAllVisibility(true)">全員表示</button>
+            <button class="small-btn" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);color:var(--text-muted);background:transparent;" onclick="setAllVisibility(false)">全員非表示</button>
           </div>
         </div>
-        <div class="settings-card">
-          <div style="padding:10px 12px">
-            <div class="settings-row-sub" style="margin-bottom:8px">チェックを外したメンバーは体温入力画面に表示されません</div>
-            <div class="visibility-grid" id="visibilityGrid"></div>
-          </div>
+        <div class="settings-card" style="padding:8px 10px">
+          <div class="visibility-grid" id="visibilityGrid"></div>
         </div>
       </div>
     </div>
@@ -1761,6 +1763,31 @@
     <div class="modal-btns">
       <button class="btn-secondary" onclick="closeModal('memberModal')">キャンセル</button>
       <button class="btn-primary" onclick="saveMember()">保存</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ADD / EDIT GUEST MODAL -->
+<div class="modal-overlay" id="guestModal" style="z-index:1500">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-h" id="guestModalTitle">ゲストを追加</div>
+    <div class="modal-sub">本日のみ有効なゲストメンバーです</div>
+    <input type="hidden" id="guestEditId">
+    <div class="edit-field">
+      <label>氏名</label>
+      <input class="modal-input" type="text" id="guestNameInput" placeholder="例: 田中 花子"
+        onkeydown="if(event.key==='Enter')saveGuest()" autocomplete="off">
+    </div>
+    <div class="edit-field" style="margin-top:12px">
+      <label>ふりがな（任意）</label>
+      <input class="modal-input" type="text" id="guestFuriInput" placeholder="例: たなか はなこ"
+        onkeydown="if(event.key==='Enter')saveGuest()" autocomplete="off">
+    </div>
+    <div class="modal-error" id="guestError" style="margin-top:10px"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('guestModal')">キャンセル</button>
+      <button class="btn-primary" onclick="saveGuest()">保存</button>
     </div>
   </div>
 </div>
@@ -2076,11 +2103,16 @@ const K = {
   notifCfg:   'hcNotifCfg5',
   reminders:  'hcReminders5',
   clockCfg:   'hcClockCfg5',
+  guests:     'hcGuests5',
 };
 
 let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
 let departures   = JSON.parse(localStorage.getItem(K.departures) || '{}');
 let members      = JSON.parse(localStorage.getItem(K.members)    || '[]');
+let guests       = JSON.parse(localStorage.getItem(K.guests)     || '[]');
+// Remove expired guests (not created today)
+guests = guests.filter(g => g.createdDate === new Date().toLocaleDateString('ja-JP'));
+localStorage.setItem('hcGuests5', JSON.stringify(guests));
 // snacks: { 'YYYY/MM/DD': { nameId: 'ate'|'skipped' } }
 let snacks       = JSON.parse(localStorage.getItem(K.snacks)     || '{}');
 let adminPw      = localStorage.getItem(K.adminPw) || 'test1234';
@@ -2108,6 +2140,7 @@ const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const saveRecords     = () => save(K.records,    records);
 const saveDepartures  = () => save(K.departures, departures);
 const saveMembers     = () => save(K.members,    members);
+const saveGuests      = () => localStorage.setItem(K.guests, JSON.stringify(guests));
 const saveCsvCols     = () => save(K.csvCols,    csvCols);
 const saveHidden      = () => save(K.hidden, [...hiddenMembers]);
 const saveSnacks      = () => save(K.snacks,     snacks);
@@ -2369,43 +2402,19 @@ function closeClock() {
 }
 
 // ---- IDLE TIMER (1 min inactivity → clock screen) ----
-const IDLE_MS = 60_000; // 1 minute
+// Idle timer disabled — clock does not auto-open
 let idleTimer = null;
-
-function resetIdleTimer() {
-  clearTimeout(idleTimer);
-  // Don't start timer if lock screen is showing
-  if (!document.getElementById('lockScreen').classList.contains('hidden')) return;
-  // Don't start timer if clock/admin already open
-  if (document.getElementById('clockScreen').classList.contains('open')) return;
-  if (document.getElementById('adminModal').classList.contains('open')) return;
-  idleTimer = setTimeout(() => {
-    // Only auto-open if no modal is open and lock screen is not showing
-    if (!document.getElementById('adminModal').classList.contains('open') &&
-        document.getElementById('lockScreen').classList.contains('hidden')) {
-      openClock();
-    }
-  }, IDLE_MS);
-}
-
-// Reset on any user interaction on the main screen
-['touchstart','touchend','mousedown','keydown','wheel','click'].forEach(evt => {
-  document.addEventListener(evt, () => {
-    // Ignore events inside the clock screen itself
-    resetIdleTimer();
-  }, { passive: true });
-});
-resetIdleTimer(); // start on load
+function resetIdleTimer() {} // no-op
 
 // ---- NAME LIST ----
 function getVisibleMembers() {
-  return members.filter(n => !hiddenMembers.has(n.id));
+  return getAllPeople().filter(n => !hiddenMembers.has(n.id));
 }
 
 function renderNames() {
   const panel = document.getElementById('namePanel');
   const visible = getVisibleMembers();
-  if (!members.length) {
+  if (!members.length && !guests.length) {
     panel.innerHTML = `<div class="name-empty">
       メンバーが登録されていません<br><br>
       右下の設定ボタンから<br>メンバーを追加してください
@@ -2426,13 +2435,14 @@ function renderNames() {
       isSelected ? 'selected' : '',
       hasRec ? 'recorded' : ''
     ].filter(Boolean).join(' ');
-    return `<div class="name-item ${cls}" onclick="selectName(${n.id})">${n.name}</div>`;
+    const guestStyle = n.isGuest ? 'style="color:var(--warn)"' : '';
+    return `<div class="name-item ${cls}" onclick="selectName(${n.id})" ${guestStyle}>${n.name}</div>`;
   }).join('');
 }
 
 function selectName(id) {
   // only select from visible members
-  selectedName = getVisibleMembers().find(n => n.id === id);
+  selectedName = getVisibleMembers().find(n => n.id === id) || getAllPeople().find(n => n.id === id);
   if (!selectedName) return;
   renderNames();
   const b = document.getElementById('selectedBadge');
@@ -2478,20 +2488,17 @@ function updateSubmitBtn() {
   const v = parseFloat(document.getElementById('tempInput').value);
   const ok = selectedName && !isNaN(v) && v >= 34 && v <= 42;
   document.getElementById('submitBtn').disabled = !ok;
+  updateSnackQuickArea();
   document.getElementById('submitHint').textContent = ok
     ? selectedName.name + ' さん、' + v.toFixed(1) + '°C で記録します'
     : '名前と体温を確認してからボタンを押してください';
 
-  // Show depart quick button only when a member is selected AND has today's record
+  // クイック button: show when a member is selected
   const dBtn = document.getElementById('departQuickBtn');
-  if (selectedName && hasTodayRecord(selectedName.id)) {
+  if (selectedName) {
     dBtn.style.display = 'block';
-    const alreadyDeparted = !!departures[selectedName.id];
-    dBtn.classList.toggle('done', alreadyDeparted);
-    dBtn.textContent = alreadyDeparted
-      ? '帰宅済み　' + departures[selectedName.id]
-      : '帰宅を記録する';
-    dBtn.onclick = alreadyDeparted ? null : recordDepartQuick;
+    dBtn.classList.remove('done');
+    dBtn.textContent = 'クイック';
   } else {
     dBtn.style.display = 'none';
   }
@@ -2618,7 +2625,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'records')  { renderStats(); }
   if (tab === 'depart')   renderDepartGrid();
-  if (tab === 'members')  { renderMemberList(); renderVisibilityGrid(); }
+  if (tab === 'members')  { renderMemberList(); renderGuestList(); renderVisibilityGrid(); }
 }
 
 // ---- STATS ----
@@ -2939,6 +2946,7 @@ function getSnackForRecord(r) {
 
 function renderSnackGrid() {
   const grid = document.getElementById('snackGrid');
+  if (!grid) return;
   if (!members.length) {
     grid.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:14px;grid-column:1/-1">メンバーが登録されていません</div>';
     return;
@@ -2974,6 +2982,50 @@ function renderSnackGrid() {
   }).join('');
 }
 
+
+function recordSnackQuick() {
+  if (!selectedName) return;
+  const today = todayStr();
+  if (!hasTodayRecord(selectedName.id)) {
+    showToast('先に体温を記録してください', '#d97706');
+    return;
+  }
+  if (!snacks[today]) snacks[today] = {};
+  const cur = snacks[today][selectedName.id];
+  // cycle: null → ate → skipped → null
+  if (!cur)              snacks[today][selectedName.id] = 'ate';
+  else if (cur === 'ate') snacks[today][selectedName.id] = 'skipped';
+  else { delete snacks[today][selectedName.id]; if (!Object.keys(snacks[today]).length) delete snacks[today]; }
+  saveSnacks();
+  updateSnackQuickArea();
+  renderSnackGrid();
+}
+
+function updateSnackQuickArea() {
+  // snackQuickArea removed — handled by quick panel
+  return;
+  const area = document.getElementById('snackQuickArea');
+  if (!area) return;
+  area.style.display = 'flex';
+  const status = getSnackForDate(selectedName.id, todayStr());
+  if (status === 'ate') {
+    btn.textContent = 'おやつ　食べた ✓';
+    btn.style.borderColor = '#16a34a';
+    btn.style.background  = 'rgba(22,163,74,0.09)';
+    btn.style.color       = '#16a34a';
+  } else if (status === 'skipped') {
+    btn.textContent = 'おやつ　食べなかった ✓';
+    btn.style.borderColor = '#dc2626';
+    btn.style.background  = 'rgba(220,38,38,0.07)';
+    btn.style.color       = '#dc2626';
+  } else {
+    btn.textContent = 'おやつ　未記録';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background  = '#fff';
+    btn.style.color       = 'var(--text-muted)';
+  }
+}
+
 function toggleSnackFromTable(nameId, status, dateStr) {
   if (!snacks[dateStr]) snacks[dateStr] = {};
   // タップ済みの同じボタンを押したらクリア（トグル）
@@ -2996,21 +3048,25 @@ function resetSnacks() {
 function renderMemberList() {
   const list  = document.getElementById('memberList');
   const empty = document.getElementById('memberEmpty');
-  if (!members.length) {
+  const all = [
+    ...members.map(n => ({...n, isGuest:false})),
+    ...guests.map(g => ({...g, isGuest:true}))
+  ];
+  if (!all.length) {
     list.innerHTML = '';
-    empty.style.display = 'block';
+    if (empty) empty.style.display = 'block';
     return;
   }
-  empty.style.display = 'none';
-  list.innerHTML = members.map(n => `
-    <div class="member-row">
-      <div class="member-name">
-        ${n.name}
-        ${n.furigana ? `<span style="display:block;font-size:12px;color:var(--text-muted);font-weight:400;margin-top:2px">${n.furigana}</span>` : ''}
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = all.map(n => `
+    <div class="member-row" style="${n.isGuest ? 'border-left:3px solid var(--warn)' : ''}">
+      <div class="member-name" style="${n.isGuest ? 'color:var(--warn)' : ''}">
+        ${n.isGuest ? '<span style="font-size:11px;font-weight:700;margin-right:4px">[G]</span>' : ''}${n.name}
+        ${n.furigana ? `<span style="display:block;font-size:11px;opacity:0.7;font-weight:400;margin-top:1px">${n.furigana}</span>` : ''}
       </div>
       <div style="display:flex;gap:6px">
-        <button class="icon-btn" onclick="openEditMember(${n.id})">編集</button>
-        <button class="icon-btn del" onclick="deleteMember(${n.id})">削除</button>
+        <button class="icon-btn" onclick="${n.isGuest ? `openEditGuest(${n.id})` : `openEditMember(${n.id})`}">編集</button>
+        <button class="icon-btn del" onclick="${n.isGuest ? `deleteGuest(${n.id})` : `deleteMember(${n.id})`}">削除</button>
       </div>
     </div>
   `).join('');
@@ -3092,16 +3148,18 @@ function deleteMember(id) {
 function renderVisibilityGrid() {
   const grid = document.getElementById('visibilityGrid');
   if (!grid) return;
-  if (!members.length) {
+  const allPeople = getAllPeople();
+  if (!allPeople.length) {
     grid.innerHTML = '<div style="color:var(--text-light);font-size:13px;padding:12px 0">メンバーが登録されていません</div>';
     return;
   }
-  grid.innerHTML = members.map(n => {
+  grid.innerHTML = allPeople.map(n => {
     const visible = !hiddenMembers.has(n.id);
+    const guestLabel = n.isGuest ? ' <span style="font-size:10px;color:var(--warn)">[G]</span>' : '';
     return `<div class="vis-item ${visible ? 'visible' : ''}" onclick="toggleVisibility(${n.id})">
       <div class="vis-check">${visible ? '&#10003;' : ''}</div>
-      <div class="vis-name">
-        ${n.name}
+      <div class="vis-name" ${n.isGuest ? 'style="color:var(--warn)"' : ''}>
+        ${n.name}${guestLabel}
         ${n.furigana ? `<span class="vis-furi">${n.furigana}</span>` : ''}
       </div>
     </div>`;
@@ -3123,7 +3181,7 @@ function setAllVisibility(show) {
   if (show) {
     hiddenMembers.clear();
   } else {
-    members.forEach(n => hiddenMembers.add(n.id));
+    getAllPeople().forEach(n => hiddenMembers.add(n.id));
   }
   saveHidden();
   renderVisibilityGrid();
@@ -3376,6 +3434,150 @@ function renderRecordsListOverlay() {
       </div></td></tr>`;
   });
   document.getElementById('recordsListBody').innerHTML = html;
+}
+
+
+// =====================================================
+// QUICK PANEL (クイック button)
+// =====================================================
+function openQuickPanel() {
+  if (!selectedName) return;
+  const nameEl = document.getElementById('quickPanelName');
+  if (nameEl) nameEl.textContent = selectedName.name + ' さん';
+
+  // Depart button state
+  const dBtn = document.getElementById('quickDepartBtn');
+  const alreadyDeparted = !!departures[selectedName.id];
+  if (alreadyDeparted) {
+    dBtn.textContent = '帰宅済み　' + departures[selectedName.id];
+    dBtn.style.opacity = '0.5';
+    dBtn.style.pointerEvents = 'none';
+  } else if (!hasTodayRecord(selectedName.id)) {
+    dBtn.textContent = '帰宅を記録する（体温未記録）';
+    dBtn.style.opacity = '0.5';
+    dBtn.style.pointerEvents = 'none';
+  } else {
+    dBtn.textContent = '帰宅を記録する';
+    dBtn.style.opacity = '1';
+    dBtn.style.pointerEvents = '';
+  }
+
+  // Snack toggle state: ate=ON, everything else=OFF (skipped)
+  const today = todayStr();
+  const snackVal = getSnackForDate(selectedName.id, today);
+  const toggle = document.getElementById('quickSnackToggle');
+  const statusEl = document.getElementById('quickSnackStatus');
+  const isAte = snackVal === 'ate';
+  toggle.checked = isAte;
+  if (statusEl) statusEl.textContent = isAte ? '食べた' : '食べなかった';
+  // Ensure skipped is saved as default if nothing recorded yet
+  if (!snackVal) {
+    if (!snacks[today]) snacks[today] = {};
+    snacks[today][selectedName.id] = 'skipped';
+    saveSnacks();
+  }
+
+  document.getElementById('quickPanelModal').classList.add('open');
+  document.body.classList.add('modal-open');
+}
+
+function closeQuickPanel() {
+  document.getElementById('quickPanelModal').classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+function quickRecordDepart() {
+  if (!selectedName || !hasTodayRecord(selectedName.id)) return;
+  const now = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+  departures[selectedName.id] = now;
+  localStorage.setItem(K.departures, JSON.stringify(departures));
+  showToast(selectedName.name + ' さん　帰宅 ' + now);
+  closeQuickPanel();
+  updateSubmitBtn();
+  renderNames();
+}
+
+function quickToggleSnack() {
+  if (!selectedName) return;
+  const today = todayStr();
+  const toggle = document.getElementById('quickSnackToggle');
+  const statusEl = document.getElementById('quickSnackStatus');
+  if (!snacks[today]) snacks[today] = {};
+  if (toggle.checked) {
+    snacks[today][selectedName.id] = 'ate';
+    if (statusEl) statusEl.textContent = '食べた';
+  } else {
+    snacks[today][selectedName.id] = 'skipped';
+    if (statusEl) statusEl.textContent = '食べなかった';
+  }
+  saveSnacks();
+  renderSnackGrid();
+}
+
+// =====================================================
+// GUEST MEMBERS
+// =====================================================
+function getAllPeople() {
+  // Combine regular members + today's guests
+  return [...members, ...guests.map(g => ({...g, isGuest:true}))];
+}
+
+function getVisiblePeople() {
+  return getAllPeople().filter(n => !hiddenMembers.has(n.id));
+}
+
+function renderGuestList() { renderMemberList(); }
+
+function openAddGuest() {
+  document.getElementById('guestEditId').value     = '';
+  document.getElementById('guestNameInput').value  = '';
+  document.getElementById('guestFuriInput').value  = '';
+  document.getElementById('guestError').textContent = '';
+  document.getElementById('guestModalTitle').textContent = 'ゲストを追加';
+  document.getElementById('guestModal').classList.add('open');
+  setTimeout(() => document.getElementById('guestNameInput').focus(), 300);
+}
+
+function openEditGuest(id) {
+  const g = guests.find(x => x.id === id);
+  if (!g) return;
+  document.getElementById('guestEditId').value     = id;
+  document.getElementById('guestNameInput').value  = g.name;
+  document.getElementById('guestFuriInput').value  = g.furigana || '';
+  document.getElementById('guestError').textContent = '';
+  document.getElementById('guestModalTitle').textContent = 'ゲストを編集';
+  document.getElementById('guestModal').classList.add('open');
+  setTimeout(() => document.getElementById('guestNameInput').focus(), 300);
+}
+
+function saveGuest() {
+  const name = document.getElementById('guestNameInput').value.trim();
+  const furi = document.getElementById('guestFuriInput').value.trim();
+  const errEl = document.getElementById('guestError');
+  if (!name) { errEl.textContent = '名前を入力してください'; return; }
+  const editId = document.getElementById('guestEditId').value;
+  if (editId) {
+    const idx = guests.findIndex(g => g.id === parseInt(editId));
+    if (idx >= 0) { guests[idx].name = name; guests[idx].furigana = furi; }
+  } else {
+    const newId = Date.now();
+    guests.push({ id: newId, name, furigana: furi, createdDate: new Date().toLocaleDateString('ja-JP') });
+    hiddenMembers.delete(newId); // visible by default
+  }
+  saveGuests();
+  closeModal('guestModal');
+  renderGuestList();
+  renderVisibilityGrid();
+  renderNames();
+}
+
+function deleteGuest(id) {
+  showConfirm('ゲスト削除', 'このゲストメンバーを削除しますか？', '削除する', 'var(--danger)', () => {
+    guests = guests.filter(g => g.id !== id);
+    hiddenMembers.delete(id);
+    saveGuests(); saveHidden();
+    renderGuestList(); renderVisibilityGrid(); renderNames();
+  });
 }
 
 function exportBasicData() {
@@ -3931,5 +4133,31 @@ setInterval(() => {
 
 
 </script>
+
+<!-- ===== QUICK PANEL ===== -->
+<div class="modal-overlay" id="quickPanelModal" style="z-index:1500;align-items:flex-end;padding:0">
+  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;padding:24px max(24px,env(safe-area-inset-right,0px)) max(32px,env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));box-shadow:0 -8px 40px rgba(0,0,0,0.15)">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
+    <div id="quickPanelName" style="font-size:14px;font-weight:700;color:var(--text-muted);text-align:center;margin-bottom:18px"></div>
+
+    <!-- 帰宅を記録する -->
+    <button id="quickDepartBtn" onclick="quickRecordDepart()" style="width:100%;padding:16px;border-radius:14px;border:2px solid var(--warn);background:var(--warn-light);color:var(--warn);font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;-webkit-appearance:none;margin-bottom:14px;touch-action:manipulation">帰宅を記録する</button>
+
+    <!-- おやつトグル -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface2);border-radius:14px;border:1px solid var(--border-light)">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--text)">おやつ</div>
+        <div id="quickSnackStatus" style="font-size:12px;color:var(--text-muted);margin-top:2px">未記録</div>
+      </div>
+      <label class="toggle-sw">
+        <input type="checkbox" id="quickSnackToggle" onchange="quickToggleSnack()">
+        <span class="toggle-sw-track"></span>
+      </label>
+    </div>
+
+    <button onclick="closeQuickPanel()" style="width:100%;margin-top:14px;padding:13px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;font-family:'Noto Sans JP',sans-serif;cursor:pointer;-webkit-appearance:none">閉じる</button>
+  </div>
+</div>
+
 </body>
 </html>
