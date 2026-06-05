@@ -2192,7 +2192,13 @@ const K = {
 
 let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
 let departures   = JSON.parse(localStorage.getItem(K.departures) || '{}');
-let members      = JSON.parse(localStorage.getItem(K.members)    || '[]');
+const DEFAULT_MEMBERS = [
+  'ひなた','あおい','あかね','ゆうと','たいが','そら',
+  'あつと','はじめ','まほ','はると','しょうま','ひより',
+  'まさあき','かずゆき','ゆい','しゅうき','たくほ','まな'
+].map((name, i) => ({ id: i + 1, name, furigana: name }));
+let members = JSON.parse(localStorage.getItem(K.members) || 'null');
+if (!members) { members = DEFAULT_MEMBERS; localStorage.setItem(K.members, JSON.stringify(members)); }
 let guests       = JSON.parse(localStorage.getItem(K.guests)     || '[]');
 // Remove expired guests (not created today)
 guests = guests.filter(g => g.createdDate === new Date().toLocaleDateString('ja-JP'));
@@ -3718,7 +3724,7 @@ function openNittokuFromSettings() {
 
 function rollNittoku(silent) {
   const today = new Date().toLocaleDateString('ja-JP');
-  const pool = getAllPeople().filter(n => !nittokuExcl.has(n.id));
+  const pool = getVisibleMembers().filter(n => !nittokuExcl.has(n.id));
   if (pool.length < 2) {
     if (!silent) showToast('選出できるメンバーが2名未満です', '#d97706');
     nittokuData = { date: today, picks: pool.map(n => n.id) };
