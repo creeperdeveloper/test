@@ -1539,6 +1539,49 @@
   }
   .clock-open-btn:active{opacity:0.7;}
 
+
+  /* ===== 日直 SCREEN ===== */
+  #nittokuScreen{
+    position:fixed;inset:0;z-index:800;
+    background:linear-gradient(150deg,#f0f7ff 0%,#e8f4fd 50%,#dff0fb 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;
+    transition:opacity 0.35s;
+    padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+  }
+  #nittokuScreen.open{opacity:1;pointer-events:all;}
+  .nittoku-date{font-size:14px;font-weight:600;color:#64748b;letter-spacing:0.08em;margin-bottom:10px;}
+  .nittoku-title{font-size:22px;font-weight:800;color:#1e293b;margin-bottom:28px;letter-spacing:0.06em;}
+  .nittoku-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:28px;width:100%;max-width:480px;padding:0 16px;}
+  .nittoku-card{
+    flex:1;min-width:130px;max-width:180px;
+    background:#fff;border-radius:20px;padding:20px 16px;
+    box-shadow:0 4px 24px rgba(37,99,235,0.10);
+    border:2px solid #e0eaff;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    text-align:center;
+  }
+  .nittoku-card-label{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.1em;}
+  .nittoku-card-name{font-size:22px;font-weight:800;color:#1e293b;line-height:1.2;}
+  .nittoku-card-guest{font-size:11px;font-weight:600;color:#d97706;}
+  .nittoku-jobs{
+    width:100%;max-width:360px;padding:0 16px;margin-bottom:28px;
+  }
+  .nittoku-job-item{
+    display:flex;align-items:center;gap:10px;padding:10px 16px;
+    background:rgba(255,255,255,0.8);border-radius:12px;margin-bottom:6px;
+    border:1px solid #e0eaff;font-size:14px;color:#334155;font-weight:500;
+  }
+  .nittoku-job-item::before{content:"✦";color:#2563eb;font-size:10px;}
+  .nittoku-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:0 16px;}
+  .nittoku-back-btn{
+    position:fixed;top:calc(18px + env(safe-area-inset-top,0px));left:calc(18px + env(safe-area-inset-left,0px));
+    height:38px;padding:0 16px;border-radius:19px;border:none;
+    background:rgba(255,255,255,0.9);color:#64748b;
+    font-size:13px;font-weight:600;font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.10);-webkit-appearance:none;
+  }
+  .nittoku-no-member{font-size:15px;color:#94a3b8;text-align:center;padding:0 24px;}
 </style>
 </head>
 <body>
@@ -1617,6 +1660,7 @@
 
 <div id="pushContainer"></div>
 <button class="clock-open-btn" onclick="openClock()" title="時計">時計</button>
+<button onclick="openNittoku()" style="position:fixed;bottom:calc(86px + env(safe-area-inset-bottom,0px));left:calc(28px + env(safe-area-inset-left,0px));height:40px;padding:0 18px;border-radius:20px;border:2px solid #d0dce8;background:#ffffff;color:#64748b;font-size:13px;font-weight:600;font-family:'Noto Sans JP',sans-serif;cursor:pointer;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,0.10);-webkit-appearance:none;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;" id="nittokuOpenBtn">日直</button>
 <button class="settings-open-btn" onclick="openGlobalSettings()">設定</button>
 <div class="toast" id="toast"></div>
 
@@ -1644,6 +1688,19 @@
   <button class="fc-back-btn" onclick="closeClock()">入力画面へ戻る</button>
 </div>
 
+
+
+<!-- ===== 日直 SCREEN ===== -->
+<div id="nittokuScreen">
+  <button class="nittoku-back-btn" onclick="closeNittoku()">← 入力画面へ</button>
+  <div class="nittoku-date" id="nittokuDate"></div>
+  <div class="nittoku-title">今日の日直</div>
+  <div class="nittoku-cards" id="nittokuCards"></div>
+  <div class="nittoku-jobs" id="nittokuJobs"></div>
+  <div class="nittoku-btn-row">
+    <button onclick="rollNittoku()" style="height:44px;padding:0 24px;border-radius:22px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;-webkit-appearance:none;box-shadow:0 4px 16px rgba(37,99,235,0.35)">🔀 ランダム選出</button>
+  </div>
+</div>
 
 <!-- ===== ADMIN MODAL ===== -->
 <div class="modal-overlay admin-overlay" id="adminModal">
@@ -1845,6 +1902,7 @@
       <button class="gs-tb"        data-tab="passwords"    onclick="switchGSTab('passwords')">パスワード</button>
       <button class="gs-tb"        data-tab="notifications"onclick="switchGSTab('notifications')">通知</button>
       <button class="gs-tb"        data-tab="reminders"    onclick="switchGSTab('reminders')">リマインダー</button>
+      <button class="gs-tb"        data-tab="nittoku"      onclick="switchGSTab('nittoku')">日直</button>
     </div>
 
     <div class="xl-modal-body">
@@ -1859,6 +1917,10 @@
           </button>
           <button class="settings-nav-row" onclick="openClockFromSettings()">
             <div><div class="settings-row-label">全画面時計を開く</div><div class="settings-row-sub">タップで全画面の時計モードへ切り替えます</div></div>
+            <span class="settings-nav-chevron">›</span>
+          </button>
+          <button class="settings-nav-row" onclick="openNittokuFromSettings()">
+            <div><div class="settings-row-label">日直を開く</div><div class="settings-row-sub">今日の日直を表示・ランダム選出</div></div>
             <span class="settings-nav-chevron">›</span>
           </button>
           <button class="settings-nav-row" onclick="exportBasicData()" style="color:var(--accent)">
@@ -1888,6 +1950,25 @@
 
         </div>
       </div>
+
+      <!-- 日直設定 -->
+      <div class="gs-tab" id="gsTab-nittoku">
+        <div class="settings-section-title">日直の仕事</div>
+        <div class="settings-card">
+          <div id="nittokuJobList"></div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <input class="modal-input" type="text" id="nittokuJobInput" placeholder="仕事を追加..." style="flex:1;height:40px;font-size:14px"
+              onkeydown="if(event.key==='Enter')addNittokuJob()">
+            <button class="small-btn btn-add" onclick="addNittokuJob()">追加</button>
+          </div>
+        </div>
+        <div class="settings-section-title" style="margin-top:20px">日直から除外するメンバー</div>
+        <div class="settings-card">
+          <div class="settings-row-sub" style="padding:8px 0 10px">チェックしたメンバーは日直の選出対象から外れます</div>
+          <div id="nittokuExcludeGrid" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+
 
       <!-- 体温管理（admin panel embedded） -->
       <div class="gs-tab" id="gsTab-tempmanage">
@@ -2104,6 +2185,9 @@ const K = {
   reminders:  'hcReminders5',
   clockCfg:   'hcClockCfg5',
   guests:     'hcGuests5',
+  nittoku:    'hcNittoku5',
+  nittokuJobs:'hcNittokuJobs5',
+  nittokuExcl:'hcNittokuExcl5',
 };
 
 let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
@@ -2315,6 +2399,7 @@ updateClock();
 function openClock() {
   document.querySelector('.settings-open-btn').style.display='none';
   document.querySelector('.clock-open-btn').style.display='none';
+  const nb=document.getElementById('nittokuOpenBtn');if(nb)nb.style.display='none';
   const now = new Date();
   document.getElementById('fcMessage').textContent = clockCfg.msg || '';
 
@@ -2398,6 +2483,7 @@ function closeClock() {
   document.getElementById('clockScreen').classList.remove('open');
   document.querySelector('.settings-open-btn').style.display='';
   document.querySelector('.clock-open-btn').style.display='';
+  const nb=document.getElementById('nittokuOpenBtn');if(nb)nb.style.display='';
   resetIdleTimer(); // restart idle timer after returning
 }
 
@@ -2413,7 +2499,11 @@ function getVisibleMembers() {
 
 function renderNames() {
   const panel = document.getElementById('namePanel');
-  const visible = getVisibleMembers();
+  const visible = getVisibleMembers().slice().sort((a, b) => {
+    const ka = a.furigana || a.name;
+    const kb = b.furigana || b.name;
+    return ka.localeCompare(kb, 'ja');
+  });
   if (!members.length && !guests.length) {
     panel.innerHTML = `<div class="name-empty">
       メンバーが登録されていません<br><br>
@@ -2590,6 +2680,7 @@ function closeModal(id) {
     document.body.classList.remove('modal-open');
     document.querySelector('.settings-open-btn').style.display='';
     document.querySelector('.clock-open-btn').style.display='';
+    const nb=document.getElementById('nittokuOpenBtn');if(nb)nb.style.display='';
   }
 }
 
@@ -2612,6 +2703,7 @@ function openAdminPanel() {
   document.body.classList.add('modal-open');
   document.querySelector('.settings-open-btn').style.display='none';
   document.querySelector('.clock-open-btn').style.display='none';
+  const nb=document.getElementById('nittokuOpenBtn');if(nb)nb.style.display='none';
   switchTab('records');
   document.getElementById('adminModal').classList.add('open');
 }
@@ -3415,8 +3507,10 @@ function renderRecordsListOverlay() {
         const t = r.displayTime ? r.displayTime.replace(/^\d{4}\/\d{2}\/\d{2}\s*/, '') : '';
         return `<td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${t||NA}</td>`;
       }
-      if (c.key === 'departTime')
-        return `<td>${r.departTime ? `<span class="badge badge-home">${r.departTime}</span>` : NA}</td>`;
+      if (c.key === 'departTime') {
+        const depTime = r.departTime || (new Date(r.timestamp).toLocaleDateString('ja-JP') === todayStr() ? departures[r.nameId ?? r.memberId] : null);
+        return `<td>${depTime ? `<span class="badge badge-home">${depTime}</span>` : NA}</td>`;
+      }
       if (c.key === 'snack') {
         const ateActive  = snackVal === 'ate';
         const skipActive = snackVal === 'skipped';
@@ -3489,8 +3583,15 @@ function closeQuickPanel() {
 function quickRecordDepart() {
   if (!selectedName || !hasTodayRecord(selectedName.id)) return;
   const now = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+  const today = new Date().toLocaleDateString('ja-JP');
   departures[selectedName.id] = now;
   localStorage.setItem(K.departures, JSON.stringify(departures));
+  // Also update the record's departTime field so it appears in the records list
+  const rec = records.find(r =>
+    (r.nameId === selectedName.id || r.memberId === selectedName.id) &&
+    new Date(r.timestamp).toLocaleDateString('ja-JP') === today
+  );
+  if (rec) { rec.departTime = now; saveRecords(); }
   showToast(selectedName.name + ' さん　帰宅 ' + now);
   closeQuickPanel();
   updateSubmitBtn();
@@ -3578,6 +3679,162 @@ function deleteGuest(id) {
     saveGuests(); saveHidden();
     renderGuestList(); renderVisibilityGrid(); renderNames();
   });
+}
+
+
+// =====================================================
+// 日直 SYSTEM
+// =====================================================
+const DEFAULT_NITTOKU_JOBS = ['黒板消し','連絡帳確認','日誌記入','教室の電気','戸締まり確認'];
+
+let nittokuData   = JSON.parse(localStorage.getItem(K.nittoku)     || 'null') || {date:'', picks:[]};
+let nittokuJobs   = JSON.parse(localStorage.getItem(K.nittokuJobs) || 'null') || [...DEFAULT_NITTOKU_JOBS];
+let nittokuExcl   = new Set(JSON.parse(localStorage.getItem(K.nittokuExcl) || '[]'));
+
+const saveNittoku     = () => localStorage.setItem(K.nittoku,     JSON.stringify(nittokuData));
+const saveNittokuJobs = () => localStorage.setItem(K.nittokuJobs, JSON.stringify(nittokuJobs));
+const saveNittokuExcl = () => localStorage.setItem(K.nittokuExcl, JSON.stringify([...nittokuExcl]));
+
+function openNittoku() {
+  const today = new Date().toLocaleDateString('ja-JP');
+  // Auto-roll if date changed
+  if (nittokuData.date !== today) rollNittoku(true);
+  renderNittokuScreen();
+  document.getElementById('nittokuScreen').classList.add('open');
+  document.querySelector('.settings-open-btn').style.display = 'none';
+  document.querySelector('.clock-open-btn').style.display = 'none';
+}
+
+function closeNittoku() {
+  document.getElementById('nittokuScreen').classList.remove('open');
+  document.querySelector('.settings-open-btn').style.display = '';
+  document.querySelector('.clock-open-btn').style.display = '';
+}
+
+function openNittokuFromSettings() {
+  closeXlModal('globalSettingsModal');
+  setTimeout(openNittoku, 250);
+}
+
+function rollNittoku(silent) {
+  const today = new Date().toLocaleDateString('ja-JP');
+  const pool = getAllPeople().filter(n => !nittokuExcl.has(n.id));
+  if (pool.length < 2) {
+    if (!silent) showToast('選出できるメンバーが2名未満です', '#d97706');
+    nittokuData = { date: today, picks: pool.map(n => n.id) };
+  } else {
+    // Fisher-Yates shuffle, take first 2
+    const arr = [...pool];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    nittokuData = { date: today, picks: [arr[0].id, arr[1].id] };
+  }
+  saveNittoku();
+  if (document.getElementById('nittokuScreen').classList.contains('open')) renderNittokuScreen();
+  if (!silent) showToast('日直を選出しました');
+}
+
+function renderNittokuScreen() {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+  document.getElementById('nittokuDate').textContent = dateStr;
+
+  const picks = nittokuData.picks || [];
+  const all = getAllPeople();
+  const cardsEl = document.getElementById('nittokuCards');
+  if (!picks.length) {
+    cardsEl.innerHTML = '<div class="nittoku-no-member">日直が選出されていません<br>ランダム選出ボタンを押してください</div>';
+  } else {
+    const labels = ['1番', '2番'];
+    cardsEl.innerHTML = picks.map((id, i) => {
+      const p = all.find(n => n.id === id);
+      const name = p ? p.name : '(削除済み)';
+      const isGuest = p?.isGuest;
+      return `<div class="nittoku-card">
+        <div class="nittoku-card-label">日直 ${labels[i]}</div>
+        <div class="nittoku-card-name">${name}</div>
+        ${isGuest ? '<div class="nittoku-card-guest">[ゲスト]</div>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  const jobsEl = document.getElementById('nittokuJobs');
+  if (nittokuJobs.length) {
+    jobsEl.innerHTML = nittokuJobs.map(j => `<div class="nittoku-job-item">${j}</div>`).join('');
+  } else {
+    jobsEl.innerHTML = '';
+  }
+}
+
+// Midnight auto-roll check (runs every minute)
+setInterval(() => {
+  const today = new Date().toLocaleDateString('ja-JP');
+  if (nittokuData.date !== today) {
+    rollNittoku(true);
+    if (document.getElementById('nittokuScreen').classList.contains('open')) renderNittokuScreen();
+  }
+}, 60_000);
+
+// ---- settings tab ----
+function initNittokuSettings() {
+  renderNittokuJobList();
+  renderNittokuExcludeGrid();
+}
+
+function renderNittokuJobList() {
+  const el = document.getElementById('nittokuJobList');
+  if (!el) return;
+  if (!nittokuJobs.length) {
+    el.innerHTML = '<div style="color:var(--text-light);font-size:13px;padding:8px 0">仕事が登録されていません</div>';
+    return;
+  }
+  el.innerHTML = nittokuJobs.map((j, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light)">
+      <span style="flex:1;font-size:14px;color:var(--text)">${j}</span>
+      <button class="icon-btn del" onclick="deleteNittokuJob(${i})">削除</button>
+    </div>`).join('');
+}
+
+function addNittokuJob() {
+  const inp = document.getElementById('nittokuJobInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  nittokuJobs.push(val);
+  saveNittokuJobs();
+  inp.value = '';
+  renderNittokuJobList();
+}
+
+function deleteNittokuJob(i) {
+  nittokuJobs.splice(i, 1);
+  saveNittokuJobs();
+  renderNittokuJobList();
+}
+
+function renderNittokuExcludeGrid() {
+  const el = document.getElementById('nittokuExcludeGrid');
+  if (!el) return;
+  const all = getAllPeople();
+  if (!all.length) { el.innerHTML = '<div style="color:var(--text-light);font-size:13px">メンバーがいません</div>'; return; }
+  el.innerHTML = all.map(n => {
+    const excluded = nittokuExcl.has(n.id);
+    const guestTag = n.isGuest ? ' <span style="font-size:11px;color:var(--warn)">[G]</span>' : '';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 4px;cursor:pointer">
+      <input type="checkbox" ${excluded ? 'checked' : ''} onchange="toggleNittokuExcl(${n.id},this.checked)"
+        style="width:18px;height:18px;accent-color:var(--danger);cursor:pointer">
+      <span style="font-size:14px;color:${n.isGuest?'var(--warn)':'var(--text)'}">${n.name}${guestTag}</span>
+      ${excluded ? '<span style="font-size:11px;color:var(--danger);margin-left:auto">除外中</span>' : ''}
+    </label>`;
+  }).join('');
+}
+
+function toggleNittokuExcl(id, checked) {
+  if (checked) nittokuExcl.add(id);
+  else nittokuExcl.delete(id);
+  saveNittokuExcl();
+  renderNittokuExcludeGrid();
 }
 
 function exportBasicData() {
@@ -3784,7 +4041,7 @@ function closeXlModal(id) {
 }
 
 let _currentGSTab = 'menu';
-const GS_TABS = ['menu','tempmanage','clock','passwords','notifications','reminders'];
+const GS_TABS = ['menu','tempmanage','clock','passwords','notifications','reminders','nittoku'];
 
 function switchGSTab(tab) {
   _currentGSTab = tab;
@@ -3803,6 +4060,7 @@ function switchGSTab(tab) {
   if (tab === 'reminders')     renderReminderList();
   if (tab === 'tempmanage')    renderTempManageTab();
   if (tab === 'clock')         initClockSettings();
+  if (tab === 'nittoku')       initNittokuSettings();
 }
 
 // Legacy aliases
