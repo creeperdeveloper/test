@@ -3486,7 +3486,13 @@ function renderRecordsListOverlay() {
   const allRows = [
     ...dayRecords,
     ...members.filter(m => !recordedIds.has(m.id)).map(m => ({ _noRecord:true, memberId:m.id, name:m.name }))
-  ];
+  ].sort((a, b) => {
+    const ma = members.find(m => m.id === (a.memberId ?? a.nameId));
+    const mb = members.find(m => m.id === (b.memberId ?? b.nameId));
+    const ka = (ma?.furigana || a.name || '');
+    const kb = (mb?.furigana || b.name || '');
+    return ka.localeCompare(kb, 'ja');
+  });
 
   if (!allRows.length) {
     document.getElementById('recordsListBody').innerHTML =
