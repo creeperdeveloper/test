@@ -1923,6 +1923,15 @@
             <div><div class="settings-row-label">日直を開く</div><div class="settings-row-sub">今日の日直を表示・ランダム選出</div></div>
             <span class="settings-nav-chevron">›</span>
           </button>
+          <button class="settings-nav-row" onclick="exportAllData()" style="color:#059669">
+            <div><div class="settings-row-label" style="color:#059669">データのエクスポート</div><div class="settings-row-sub">全記録・メンバー・設定をJSONで保存</div></div>
+            <span class="settings-nav-chevron" style="color:#059669">↓</span>
+          </button>
+          <button class="settings-nav-row" onclick="document.getElementById('importFileInput').click()" style="color:#7c3aed">
+            <div><div class="settings-row-label" style="color:#7c3aed">データのインポート</div><div class="settings-row-sub">エクスポートしたJSONファイルを読み込む</div></div>
+            <span class="settings-nav-chevron" style="color:#7c3aed">↑</span>
+          </button>
+          <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importAllData(event)">
           <button class="settings-nav-row" onclick="exportBasicData()" style="color:var(--accent)">
             <div><div class="settings-row-label" style="color:var(--accent)">基本データのエクスポート</div><div class="settings-row-sub">全メンバーの本日の体温・帰宅・おやつをCSV出力</div></div>
             <span class="settings-nav-chevron" style="color:var(--accent)">↓</span>
@@ -1962,7 +1971,9 @@
             <button class="small-btn btn-add" onclick="addNittokuJob()">追加</button>
           </div>
         </div>
-        <div class="settings-section-title" style="margin-top:20px">日直から除外するメンバー</div>
+        <div class="settings-section-title" style="margin-top:20px;display:flex;align-items:center;justify-content:space-between">担当履歴 <button class="small-btn btn-del" onclick="resetNittokuHistory()" style="font-size:11px">履歴リセット</button></div>
+        <div class="settings-card" style="margin-bottom:14px"><div id="nittokuHistGrid" style="display:flex;flex-direction:column;gap:4px"></div></div>
+        <div class="settings-section-title" style="margin-top:8px">日直から除外するメンバー</div>
         <div class="settings-card">
           <div class="settings-row-sub" style="padding:8px 0 10px">チェックしたメンバーは日直の選出対象から外れます</div>
           <div id="nittokuExcludeGrid" style="display:flex;flex-direction:column;gap:6px"></div>
@@ -2188,6 +2199,7 @@ const K = {
   nittoku:    'hcNittoku5',
   nittokuJobs:'hcNittokuJobs5',
   nittokuExcl:'hcNittokuExcl5',
+  nittokuHist:'hcNittokuHist5',
 };
 
 let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
@@ -3699,7 +3711,8 @@ function deleteGuest(id) {
 // =====================================================
 const DEFAULT_NITTOKU_JOBS = ['黒板消し','連絡帳確認','日誌記入','教室の電気','戸締まり確認'];
 
-let nittokuData   = JSON.parse(localStorage.getItem(K.nittoku)     || 'null') || {date:'', picks:[]};
+let nittokuData   = JSON.parse(localStorage.getItem(K.nittoku)     || 'null') || {date:'', picks:[], lastPick:null};
+let nittokuHistory = JSON.parse(localStorage.getItem(K.nittokuHist) || '{}'); // {id: count}
 let nittokuJobs   = JSON.parse(localStorage.getItem(K.nittokuJobs) || 'null') || [...DEFAULT_NITTOKU_JOBS];
 let nittokuExcl   = new Set(JSON.parse(localStorage.getItem(K.nittokuExcl) || '[]'));
 
@@ -3731,21 +3744,42 @@ function openNittokuFromSettings() {
 function rollNittoku(silent) {
   const today = new Date().toLocaleDateString('ja-JP');
   const pool = getVisibleMembers().filter(n => !nittokuExcl.has(n.id));
-  if (pool.length < 2) {
-    if (!silent) showToast('選出できるメンバーが2名未満です', '#d97706');
-    nittokuData = { date: today, picks: pool.map(n => n.id) };
-  } else {
-    // Fisher-Yates shuffle, take first 2
-    const arr = [...pool];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    nittokuData = { date: today, picks: [arr[0].id, arr[1].id] };
+
+  if (!pool.length) {
+    if (!silent) showToast('選出できるメンバーがいません', '#d97706');
+    nittokuData = { date: today, picks: [], lastPick: nittokuData.lastPick };
+    saveNittoku(); return;
   }
+
+  // Exclude last pick to prevent consecutive
+  const lastId = nittokuData.lastPick;
+  const candidates = pool.length > 1 ? pool.filter(n => n.id !== lastId) : pool;
+
+  // Build weighted selection: weight = 1 / (timesServed + 1)
+  // so those with 0 times get weight 1, 1 time → 0.5, etc.
+  const hist = nittokuHistory; // { memberId: count }
+  const maxCount = Math.max(...candidates.map(n => hist[n.id] || 0), 0);
+  const weights = candidates.map(n => {
+    const done = hist[n.id] || 0;
+    // give extra weight to those below average: weight inversely proportional to count
+    return maxCount - done + 1; // higher = chosen more often
+  });
+  const totalW = weights.reduce((s, w) => s + w, 0);
+  let rand = Math.random() * totalW;
+  let chosen = candidates[candidates.length - 1];
+  for (let i = 0; i < candidates.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) { chosen = candidates[i]; break; }
+  }
+
+  // Update history
+  nittokuHistory[chosen.id] = (nittokuHistory[chosen.id] || 0) + 1;
+  localStorage.setItem(K.nittokuHist, JSON.stringify(nittokuHistory));
+
+  nittokuData = { date: today, picks: [chosen.id], lastPick: chosen.id };
   saveNittoku();
   if (document.getElementById('nittokuScreen').classList.contains('open')) renderNittokuScreen();
-  if (!silent) showToast('日直を選出しました');
+  if (!silent) showToast(chosen.name + ' さんが日直に選ばれました');
 }
 
 function renderNittokuScreen() {
@@ -3759,17 +3793,16 @@ function renderNittokuScreen() {
   if (!picks.length) {
     cardsEl.innerHTML = '<div class="nittoku-no-member">日直が選出されていません<br>ランダム選出ボタンを押してください</div>';
   } else {
-    const labels = ['1番', '2番'];
-    cardsEl.innerHTML = picks.map((id, i) => {
-      const p = all.find(n => n.id === id);
-      const name = p ? p.name : '(削除済み)';
-      const isGuest = p?.isGuest;
-      return `<div class="nittoku-card">
-        <div class="nittoku-card-label">日直 ${labels[i]}</div>
-        <div class="nittoku-card-name">${name}</div>
-        ${isGuest ? '<div class="nittoku-card-guest">[ゲスト]</div>' : ''}
-      </div>`;
-    }).join('');
+    const id = picks[0];
+    const p = all.find(n => n.id === id);
+    const name = p ? p.name : '(削除済み)';
+    const count = nittokuHistory[id] || 0;
+    cardsEl.innerHTML = `<div class="nittoku-card" style="min-width:180px;padding:28px 20px">
+      <div class="nittoku-card-label">今日の日直</div>
+      <div class="nittoku-card-name" style="font-size:30px">${name}</div>
+      ${p?.isGuest ? '<div class="nittoku-card-guest">[ゲスト]</div>' : ''}
+      <div style="font-size:11px;color:#94a3b8;margin-top:6px">担当回数: ${count} 回</div>
+    </div>`;
   }
 
   const jobsEl = document.getElementById('nittokuJobs');
@@ -3792,7 +3825,40 @@ setInterval(() => {
 // ---- settings tab ----
 function initNittokuSettings() {
   renderNittokuJobList();
+  renderNittokuHistGrid();
   renderNittokuExcludeGrid();
+}
+
+function renderNittokuHistGrid() {
+  const el = document.getElementById('nittokuHistGrid');
+  if (!el) return;
+  const all = getVisibleMembers().filter(n => !nittokuExcl.has(n.id));
+  if (!all.length) { el.innerHTML = '<div style="color:var(--text-light);font-size:13px">メンバーがいません</div>'; return; }
+  const sorted = [...all].sort((a,b) => (nittokuHistory[a.id]||0) - (nittokuHistory[b.id]||0));
+  const maxC = Math.max(...sorted.map(n => nittokuHistory[n.id]||0), 1);
+  el.innerHTML = sorted.map(n => {
+    const c = nittokuHistory[n.id] || 0;
+    const pct = Math.round(c / maxC * 100);
+    const isLast = nittokuData.lastPick === n.id;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0">
+      <span style="font-size:13px;min-width:80px;color:var(--text)">${n.name}${isLast ? ' <span style="font-size:10px;color:#7c3aed">前回</span>' : ''}</span>
+      <div style="flex:1;background:var(--border-light);border-radius:4px;height:8px">
+        <div style="width:${pct}%;background:var(--accent);border-radius:4px;height:8px;min-width:${c?4:0}px"></div>
+      </div>
+      <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-muted);min-width:30px;text-align:right">${c}回</span>
+    </div>`;
+  }).join('');
+}
+
+function resetNittokuHistory() {
+  showConfirm('履歴リセット','全員の日直担当回数をリセットしますか？','リセット','var(--danger)', () => {
+    nittokuHistory = {};
+    localStorage.removeItem(K.nittokuHist);
+    nittokuData.lastPick = null;
+    saveNittoku();
+    renderNittokuHistGrid();
+    showToast('担当履歴をリセットしました');
+  });
 }
 
 function renderNittokuJobList() {
@@ -3847,6 +3913,54 @@ function toggleNittokuExcl(id, checked) {
   else nittokuExcl.delete(id);
   saveNittokuExcl();
   renderNittokuExcludeGrid();
+}
+
+
+// =====================================================
+// FULL DATA EXPORT / IMPORT
+// =====================================================
+function exportAllData() {
+  const exportKeys = Object.values(K);
+  const data = { _version: 1, _exportDate: new Date().toISOString(), _app: 'IMOSS' };
+  exportKeys.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v !== null) data[k] = v;
+  });
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `IMOSS_backup_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('データをエクスポートしました');
+}
+
+function importAllData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data._app !== 'IMOSS') { showToast('このファイルはIMOSSのバックアップではありません', '#dc2626'); return; }
+      showConfirm(
+        'データのインポート',
+        '現在のデータをすべて上書きしますか？\nこの操作は取り消せません。',
+        '上書きインポート', 'var(--danger)',
+        () => {
+          Object.keys(data).forEach(k => {
+            if (!k.startsWith('_')) localStorage.setItem(k, data[k]);
+          });
+          showToast('インポート完了。ページを再読み込みします...');
+          setTimeout(() => location.reload(), 1200);
+        }
+      );
+    } catch(err) {
+      showToast('JSONの読み込みに失敗しました', '#dc2626');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 function exportBasicData() {
