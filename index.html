@@ -2205,9 +2205,7 @@ const K = {
 let records      = JSON.parse(localStorage.getItem(K.records)    || '[]');
 let departures   = JSON.parse(localStorage.getItem(K.departures) || '{}');
 const DEFAULT_MEMBERS = [
-  'ひなた','あおい','あかね','ゆうと','たいが','そら',
-  'あつと','はじめ','まほ','はると','しょうま','ひより',
-  'まさあき','かずゆき','ゆい','しゅうき','たくほ','まな'
+  'てすと'
 ].map((name, i) => ({ id: i + 1, name, furigana: name }));
 let members = JSON.parse(localStorage.getItem(K.members) || 'null');
 if (!members) { members = DEFAULT_MEMBERS; localStorage.setItem(K.members, JSON.stringify(members)); }
